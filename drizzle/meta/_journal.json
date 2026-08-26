@@ -15,6 +15,41 @@
       "when": 1787783074783,
       "tag": "0001_violet_starbolt",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1787783325017,
+      "tag": "0002_greedy_paper_doll",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1787783786293,
+      "tag": "0003_nostalgic_black_bolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1787784072370,
+      "tag": "0004_puzzling_darwin",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1787784413511,
+      "tag": "0005_acoustic_hydra",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1787784621923,
+      "tag": "0006_faithful_rockslide",
+      "breakpoints": true
     }
   ]
 }

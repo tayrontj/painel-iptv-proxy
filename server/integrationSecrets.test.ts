@@ -3,7 +3,7 @@
  * o token original como texto armazenável no banco.
  */
 import { describe, expect, it } from "vitest";
-import { encryptIntegrationSecret } from "./integrationSecrets";
+import { decryptIntegrationSecret, encryptIntegrationSecret } from "./integrationSecrets";
 
 describe("encryptIntegrationSecret", () => {
   it("cifra o token e expõe apenas os quatro últimos caracteres no indicador", () => {
@@ -12,7 +12,7 @@ describe("encryptIntegrationSecret", () => {
     const encrypted = encryptIntegrationSecret("token-super-secreto-1234");
     expect(encrypted.ciphertext).not.toContain("token-super-secreto-1234");
     expect(encrypted.hint).toBe("••••1234");
+    expect(decryptIntegrationSecret({ ciphertext: encrypted.ciphertext, iv: encrypted.iv, tag: encrypted.tag })).toBe("token-super-secreto-1234");
     process.env.JWT_SECRET = previous;
   });
 });
-

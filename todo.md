@@ -6,10 +6,29 @@
 - [x] Criar uma tela administrativa de clientes com listagem, estados de assinatura e ações básicas, sem login de usuário final.
 - [x] Criar uma página VOD para cadastrar filmes, séries e novelas, com campos e metadados específicos por tipo de conteúdo.
 - [x] Incluir a gestão de VOD na navegação e nos dados demonstrativos, preservando a separação entre conteúdo ao vivo e catálogo sob demanda.
-- [ ] Preparar uma configuração segura para APIs externas de detalhes e capas de VOD, com chaves mantidas fora do cliente React.
-- [ ] Incluir uma experiência de busca e pré-preenchimento de metadados no cadastro de VOD.
+- [x] Preparar uma configuração segura para APIs externas de detalhes e capas de VOD, com chaves mantidas fora do cliente React.
+- [x] Incluir uma experiência de busca e pré-preenchimento de metadados no cadastro de VOD.
 - [x] Criar uma tela de integrações para configurar Mercado Pago e a fonte de metadados VOD pelo painel, sem tokens hardcoded ou expostos ao React.
 - [x] Remover o login de usuários finais do escopo do painel e manter a gestão de clientes sob controle administrativo.
-- [ ] Estruturar a gestão de assinaturas com cobrança PIX do Mercado Pago e acompanhamento de status no painel.
-- [ ] Preparar contratos de API para o aplicativo exibir QR Code PIX e alertas de assinatura próxima do vencimento ou vencida.
+- [x] Estruturar a gestão de assinaturas com cobrança PIX do Mercado Pago e acompanhamento de status no painel.
+- [x] Preparar contratos de API para o aplicativo exibir QR Code PIX e alertas de assinatura próxima do vencimento ou vencida.
 - [x] Revisar a interface final para confirmar que não há papéis, fluxos ou termos de revenda.
+- [x] Adicionar suporte persistente de capa ao VOD e salvar a capa escolhida a partir da busca de metadados.
+- [x] Implementar atualização de status PIX por notificação do Mercado Pago e exibir o histórico de cobranças no painel.
+- [x] Criar procedimentos específicos para o aplicativo consumir o estado de assinatura, alertas e QR Code PIX.
+- [x] Substituir todos os prompts, alertas e confirmações nativos do navegador por caixas modais próprias do painel.
+- [x] Criar temporadas, episódios e capítulos vinculados ao título VOD, com inclusão incremental para séries semanais e novelas diárias.
+- [x] Criar uma tela de detalhes do VOD para cadastrar e publicar episódios/capítulos sem recriar a série ou novela.
+- [x] Criar cadastro de planos com preço, ciclo de pagamento, quantidade de telas e período de teste.
+- [x] Vincular clientes aos planos para aplicar automaticamente vencimento, período de teste e limite de telas.
+- [x] Modelar múltiplos ciclos e descontos percentuais dentro de um único plano, permitindo escolha do ciclo no cadastro do cliente.
+- [x] Criar rotas do aplicativo para listar opções, simular valores e solicitar upgrade ou downgrade de plano com ciclo escolhido.
+- [ ] Exibir no painel de Assinaturas PIX o histórico persistente de cobranças por cliente e os status atualizados pelo webhook.
+- [x] Reorganizar o formulário de criação de planos para caber no viewport, com agrupamento e rolagem interna responsiva.
+- [x] Adicionar no cadastro de canais URLs M3U8 de origem e fallback por qualidade, mantendo-as somente no servidor.
+- [ ] Gerar listas M3U compatíveis para clientes externos, sem reutilizar a API oficial do aplicativo.
+- [ ] Criar API oficial do aplicativo com catálogo, assinaturas, canais e sinalização explícita de conteúdo 18+ para bloqueio local.
+- [ ] Aplicar a trava 18+ também a programas EPG, filmes, séries, novelas e episódios na API oficial.
+- [ ] Garantir que a API não armazene PIN nem bloqueie conteúdo, retornando apenas a sinalização etária para controle local do aplicativo.
+- [ ] Implementar o endpoint privado de reprodução usado pela M3U, com token, qualidade e fallback selecionados sem expor fontes de origem.
+- [ ] Expandir a API oficial para retornar programas EPG e episódios VOD com sua classificação etária.

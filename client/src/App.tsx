@@ -11,6 +11,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { ChannelsPage, CustomersPage, EpgPage, SubscriptionsPage } from "./pages/AdminPages";
 import Home from "./pages/Home";
 import IntegrationsPage from "./pages/IntegrationsPage";
+import PlansPage from "./pages/PlansPage";
+import VodEpisodesPage from "./pages/VodEpisodesPage";
 import VodPage from "./pages/VodPage";
 
 function Router() {
@@ -18,8 +20,10 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/clientes" component={CustomersPage} />
+      <Route path="/planos" component={PlansPage} />
       <Route path="/canais" component={ChannelsPage} />
       <Route path="/vod" component={VodPage} />
+      <Route path="/vod/:id/episodios" component={VodEpisodesPage} />
       <Route path="/epg" component={EpgPage} />
       <Route path="/assinaturas" component={SubscriptionsPage} />
       <Route path="/integracoes" component={IntegrationsPage} />

@@ -2,7 +2,7 @@
  * Criptografa credenciais fornecidas pelo administrador antes da persistência.
  * O navegador recebe apenas o indicador mascarado; o segredo nunca retorna via API.
  */
-import { createCipheriv, createHash, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 function encryptionKey() {
   const secret = process.env.JWT_SECRET;
@@ -21,4 +21,10 @@ export function encryptIntegrationSecret(value: string) {
     tag: tag.toString("base64"),
     hint: `••••${value.slice(-4)}`,
   };
+}
+
+export function decryptIntegrationSecret(input: { ciphertext: string; iv: string; tag: string }) {
+  const decipher = createDecipheriv("aes-256-gcm", encryptionKey(), Buffer.from(input.iv, "base64"));
+  decipher.setAuthTag(Buffer.from(input.tag, "base64"));
+  return Buffer.concat([decipher.update(Buffer.from(input.ciphertext, "base64")), decipher.final()]).toString("utf8");
 }

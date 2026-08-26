@@ -26,6 +26,7 @@ type PanelLayoutProps = {
 const navigation: { label: string; path?: string; icon: LucideIcon }[] = [
   { label: "Visão geral", path: "/", icon: LayoutDashboard },
   { label: "Clientes", path: "/clientes", icon: UsersRound },
+  { label: "Planos", path: "/planos", icon: CircleDollarSign },
   { label: "Canais ao vivo", path: "/canais", icon: RadioTower },
   { label: "Catálogo VOD", path: "/vod", icon: Clapperboard },
   { label: "EPG", path: "/epg", icon: Activity },
