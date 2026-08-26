@@ -64,6 +64,7 @@ export async function createChannel(input: { name: string; groupTitle: string; s
   await db.insert(channelSources).values(input.sources.map(source => ({ channelId, quality: source.quality, primaryUrl: source.primaryUrl, fallbackUrl: source.fallbackUrl || null })));
   return { id: channelId };
 }
+export async function getChannelSources(channelId: number) { const db = await getDb(); return db ? db.select().from(channelSources).where(eq(channelSources.channelId, channelId)) : []; }
 export async function toggleChannel(id: number, isActive: boolean) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(channels).set({ isActive }).where(eq(channels.id, id)); }
 
 export async function listEpgSources() { const db = await getDb(); return db ? db.select().from(epgSources).orderBy(desc(epgSources.updatedAt)) : []; }

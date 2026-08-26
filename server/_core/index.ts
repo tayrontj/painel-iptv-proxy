@@ -9,7 +9,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { handleMercadoPagoWebhook } from "../mercadoPagoWebhook";
-import { exportM3u } from "../m3uExport";
+import { exportM3u, playbackChannel } from "../m3uExport";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +40,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   app.post("/api/webhooks/mercado-pago", handleMercadoPagoWebhook);
   app.get("/api/m3u", exportM3u);
+  app.get("/api/playback/:channelId", playbackChannel);
   // tRPC API
   app.use(
     "/api/trpc",

@@ -13,6 +13,7 @@ import Home from "./pages/Home";
 import IntegrationsPage from "./pages/IntegrationsPage";
 import PlansPage from "./pages/PlansPage";
 import VodEpisodesPage from "./pages/VodEpisodesPage";
+import M3uPage from "./pages/M3uPage";
 import VodPage from "./pages/VodPage";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/canais" component={ChannelsPage} />
       <Route path="/vod" component={VodPage} />
       <Route path="/vod/:id/episodios" component={VodEpisodesPage} />
+      <Route path="/listas-m3u" component={M3uPage} />
       <Route path="/epg" component={EpgPage} />
       <Route path="/assinaturas" component={SubscriptionsPage} />
       <Route path="/integracoes" component={IntegrationsPage} />
