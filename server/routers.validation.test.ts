@@ -15,9 +15,14 @@ function createContext(): TrpcContext {
 }
 
 describe("contratos administrativos", () => {
-  it("rejeita cliente sem rótulo válido antes de persistir", async () => {
+  it("rejeita cliente sem nome válido antes de persistir", async () => {
     const caller = appRouter.createCaller(createContext());
-    await expect(caller.customers.create({ label: "", plan: "Mensal", screenLimit: 1, expiresAt: new Date() })).rejects.toBeDefined();
+    await expect(caller.customers.create({ label: "", email: "cliente@exemplo.com", phone: "11999999999", planId: 1, planCycleId: 1 })).rejects.toBeDefined();
+  });
+
+  it("rejeita e-mail inválido no cadastro do cliente antes de persistir", async () => {
+    const caller = appRouter.createCaller(createContext());
+    await expect(caller.customers.create({ label: "Cliente Válido", email: "email-invalido", phone: "11999999999", planId: 1, planCycleId: 1 })).rejects.toBeDefined();
   });
 
   it("rejeita URL de VOD malformada antes de persistir", async () => {

@@ -20,6 +20,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import PanelLayout from "@/components/PanelLayout";
 import { getVodKindLabel, type VodKind } from "@/lib/panelModel";
 import { trpc } from "@/lib/trpc";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 
 const kinds: { id: VodKind; description: string; icon: typeof Film }[] = [
@@ -35,6 +36,7 @@ export default function VodPage() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [synopsis, setSynopsis] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
+  const [ageRating, setAgeRating] = useState("0");
   const [metadataResults, setMetadataResults] = useState<Array<{ providerId: string; title: string; overview: string; releaseYear: number | null; posterUrl: string | null }>>([]);
   const utils = trpc.useUtils();
   const { user } = useAuth();
@@ -43,7 +45,7 @@ export default function VodPage() {
     onSuccess: async () => {
       await utils.vod.list.invalidate();
       toast.success("VOD salvo no catálogo administrativo.");
-      setTitle(""); setYear(""); setSourceUrl(""); setSynopsis(""); setPosterUrl("");
+      setTitle(""); setYear(""); setSourceUrl(""); setSynopsis(""); setPosterUrl(""); setAgeRating("0");
     },
     onError: error => toast.error(error.message),
   });
@@ -95,7 +97,7 @@ export default function VodPage() {
     if (sourceUrl.trim()) {
       try { new URL(sourceUrl); } catch { toast.error("Informe uma URL de reprodução válida."); return; }
     }
-    createVod.mutate({ title: title.trim(), kind, releaseYear: parsedYear, sourceUrl: sourceUrl.trim() || null, synopsis: synopsis.trim() || null, posterUrl: posterUrl || null });
+    createVod.mutate({ title: title.trim(), kind, releaseYear: parsedYear, sourceUrl: sourceUrl.trim() || null, synopsis: synopsis.trim() || null, posterUrl: posterUrl || null, ageRating: Number(ageRating) });
   };
 
   return (
@@ -140,11 +142,11 @@ export default function VodPage() {
             <label className="form-label">Ano de lançamento
               <input value={year} onChange={event => setYear(event.target.value)} inputMode="numeric" placeholder="AAAA" className="form-input" />
             </label>
-            <label className="form-label">Classificação indicativa
-              <select defaultValue="Livre" className="form-input"><option>Livre</option><option>10 anos</option><option>12 anos</option><option>14 anos</option><option>16 anos</option><option>18 anos</option></select>
-            </label>
-            <label className="form-label sm:col-span-2">URL de reprodução ou manifest
-              <input value={sourceUrl} onChange={event => setSourceUrl(event.target.value)} placeholder="https://origem-protegida/arquivo.m3u8" className="form-input font-mono text-xs" />
+            <span className="form-label">Classificação indicativa
+              <Select value={ageRating} onValueChange={setAgeRating}><SelectTrigger className="h-[45px] w-full border-white/[.1] bg-white/[.035] text-slate-100 hover:bg-white/[.055]"><SelectValue /></SelectTrigger><SelectContent className="border-white/[.1] bg-[#10191f] text-slate-100">{[["0", "Livre"], ["10", "10 anos"], ["12", "12 anos"], ["14", "14 anos"], ["16", "16 anos"], ["18", "18 anos"]].map(([value, label]) => <SelectItem key={value} value={value} className="cursor-pointer text-slate-100 focus:bg-[#43E6C2]/15 focus:text-white data-[state=checked]:bg-white/[.06]">{label}</SelectItem>)}</SelectContent></Select>
+            </span>
+            <label className="form-label sm:col-span-2">URL de mídia ou reprodução
+              <input value={sourceUrl} onChange={event => setSourceUrl(event.target.value)} placeholder="https://origem-protegida/arquivo.mp4 ou .m3u8" className="form-input font-mono text-xs" />
             </label>
             {isEpisodic ? (
               <>
@@ -176,7 +178,7 @@ export default function VodPage() {
           ) : null}
 
           <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.07] pt-5">
-            <p className="max-w-md text-xs leading-5 text-slate-500">O registro permanece local nesta prévia. A API administrativa fará a persistência e o enriquecimento quando as integrações forem conectadas.</p>
+            <p className="max-w-md text-xs leading-5 text-slate-500">A URL pode apontar para M3U8, MP4, MKV, AVI ou outro formato que o aplicativo do cliente consiga reproduzir. Apenas URLs HTTP(S) são aceitas.</p>
             <button type="button" disabled={createVod.isPending} onClick={handleSave} className="pressable inline-flex items-center gap-2 rounded-xl bg-[#43E6C2] px-4 py-3 text-sm font-bold text-[#07201c] transition hover:bg-[#72f0d5] disabled:cursor-wait disabled:opacity-60"><UploadCloud className="h-4 w-4" /> {createVod.isPending ? "Salvando" : "Salvar rascunho"}</button>
           </div>
         </article>

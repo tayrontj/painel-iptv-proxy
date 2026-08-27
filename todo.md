@@ -57,3 +57,10 @@
 - [ ] Ativar automaticamente o monitor de canais de cinco minutos ao cadastrar o primeiro canal.
 - [ ] Sincronizar EPG incrementalmente em cadência adaptável à cobertura de 24 ou 48 horas, com última leitura e falhas visíveis no painel.
 - [ ] Acionar a sincronização do EPG somente quando a cobertura futura restante estiver abaixo do limiar configurado ou quando a última leitura falhar.
+- [x] Atualizar a interface EPG para comunicar sincronização inteligente por cobertura, substituindo referências a leitura contínua.
+- [x] Completar o modal de adicionar cliente com nome, e-mail, telefone e seleção clara de plano/ciclo.
+- [x] Reconstruir o modal de adicionar canal com logo, ID EPG, número, classificação, modo master ou qualidades separadas e cabeçalhos/fallback individuais por link.
+- [x] Personalizar todos os scrollbars globais e internos com acabamento escuro e acento verde do Nexus Stream.
+- [x] Corrigir comboboxes e opções do painel para manter contraste legível no tema escuro.
+- [x] Substituir o seletor nativo remanescente de classificação indicativa no cadastro VOD pelo combobox escuro do painel.
+- [x] Aceitar URLs de mídia em formatos livres para filmes, séries, novelas e episódios, sem restringir a extensão do arquivo.

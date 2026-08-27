@@ -61,7 +61,7 @@
 
 * { border-color: var(--border); }
 
-html { background: #091013; }
+html { background: #091013; scrollbar-color: #2a7466 #091013; scrollbar-width: thin; }
 
 body {
   min-width: 320px;
@@ -74,7 +74,16 @@ body {
 }
 
 button, input, select, textarea { font: inherit; }
+select { color-scheme: dark; }
+select option { background: #10191f; color: #f1f5f9; }
+select option:checked { background: #1d6659; color: #ffffff; }
 button:not(:disabled), [role="button"]:not([aria-disabled="true"]), a[href], select:not(:disabled) { cursor: pointer; }
+
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: #091013; border-radius: 999px; }
+*::-webkit-scrollbar-thumb { border: 2px solid #091013; border-radius: 999px; background: linear-gradient(180deg, #347b6e, #1f5149); }
+*::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #43e6c2, #2d9b85); }
+*::-webkit-scrollbar-corner { background: #091013; }
 
 .panel-shell { background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px); background-size: 42px 42px; }
 .surface-card { border: 1px solid rgba(255,255,255,.075); border-radius: 20px; background: rgba(16,26,31,.78); box-shadow: 0 16px 42px rgba(0,0,0,.13); }

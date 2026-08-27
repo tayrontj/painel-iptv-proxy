@@ -38,7 +38,7 @@ function hashAccessToken(value: string) { return createHash("sha256").update(val
 function randomDigits(length = 10) { return Array.from({ length }, () => randomInt(0, 10)).join(""); }
 
 export async function listCustomers() { const db = await getDb(); return db ? db.select().from(customers).orderBy(desc(customers.updatedAt)) : []; }
-export async function createCustomer(input: { label: string; planId: number; planCycleId: number }) {
+export async function createCustomer(input: { label: string; email?: string | null; phone?: string | null; planId: number; planCycleId: number }) {
   const db = await getDb();
   if (!db) throw new Error("Banco indisponível");
   const [plan] = await db.select().from(plans).where(eq(plans.id, input.planId)).limit(1);
@@ -48,7 +48,7 @@ export async function createCustomer(input: { label: string; planId: number; pla
   const now = Date.now();
   const trialEndsAt = plan.trialDays > 0 ? new Date(now + plan.trialDays * 86_400_000) : null;
   const expiresAt = new Date((trialEndsAt?.getTime() ?? now) + cycle.intervalDays * 86_400_000);
-  await db.insert(customers).values({ label: input.label, plan: plan.name, planId: plan.id, planCycleId: cycle.id, screenLimit: plan.screenLimit, usedScreens: 0, expiresAt, trialEndsAt, accessTokenHash: hashAccessToken(accessToken), xtreamUsername, xtreamPasswordHash: hashAccessToken(xtreamPassword), status: "active" });
+  await db.insert(customers).values({ label: input.label, email: input.email || null, phone: input.phone || null, plan: plan.name, planId: plan.id, planCycleId: cycle.id, screenLimit: plan.screenLimit, usedScreens: 0, expiresAt, trialEndsAt, accessTokenHash: hashAccessToken(accessToken), xtreamUsername, xtreamPasswordHash: hashAccessToken(xtreamPassword), status: "active" });
   return { accessToken, xtreamUsername, xtreamPassword };
 }
 export async function getCustomerById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(customers).where(eq(customers.id, id)).limit(1); return rows[0]; }
@@ -57,24 +57,26 @@ export async function updateCustomerStatus(id: number, status: "active" | "atten
 export async function rotateXtreamPassword(id: number) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const password = randomDigits(12); await db.update(customers).set({ xtreamPasswordHash: hashAccessToken(password) }).where(eq(customers.id, id)); return { password }; }
 
 export async function listChannels() { const db = await getDb(); return db ? db.select().from(channels).orderBy(desc(channels.updatedAt)) : []; }
-export async function createChannel(input: { name: string; groupTitle: string; sources: Array<{ quality: string; primaryUrl: string; fallbackUrl?: string | null }> }) {
+export async function createChannel(input: { name: string; groupTitle: string; channelNumber: number; epgId?: string | null; logoUrl?: string | null; ageRating: number; sources: Array<{ quality: string; primaryUrl: string; primaryOrigin?: string | null; primaryReferer?: string | null; fallbackUrl?: string | null; fallbackOrigin?: string | null; fallbackReferer?: string | null }> }) {
   const db = await getDb();
   if (!db) throw new Error("Banco indisponível");
   const qualities = input.sources.map(source => source.quality).join(" · ");
-  const result = await db.insert(channels).values({ channelNumber: 0, name: input.name, groupTitle: input.groupTitle, qualities, routeCount: input.sources.length, isActive: false });
+  const result = await db.insert(channels).values({ channelNumber: input.channelNumber, name: input.name, groupTitle: input.groupTitle, epgId: input.epgId || null, logoUrl: input.logoUrl || null, ageRating: input.ageRating, qualities, routeCount: input.sources.length, isActive: false });
   const channelId = Number(result[0].insertId);
-  await db.insert(channelSources).values(input.sources.map(source => ({ channelId, quality: source.quality, primaryUrl: source.primaryUrl, fallbackUrl: source.fallbackUrl || null })));
+  await db.insert(channelSources).values(input.sources.map(source => ({ channelId, quality: source.quality, primaryUrl: source.primaryUrl, primaryOrigin: source.primaryOrigin || null, primaryReferer: source.primaryReferer || null, fallbackUrl: source.fallbackUrl || null, fallbackOrigin: source.fallbackOrigin || null, fallbackReferer: source.fallbackReferer || null })));
   return { id: channelId };
 }
 export async function getChannelSources(channelId: number) { const db = await getDb(); return db ? db.select().from(channelSources).where(eq(channelSources.channelId, channelId)) : []; }
 export async function toggleChannel(id: number, isActive: boolean) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(channels).set({ isActive }).where(eq(channels.id, id)); }
 
 export async function listEpgSources() { const db = await getDb(); return db ? db.select().from(epgSources).orderBy(desc(epgSources.updatedAt)) : []; }
-export async function createEpgSource(name: string) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.insert(epgSources).values({ name }); }
-export async function markEpgSync(id: number) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(epgSources).set({ status: "healthy", lastSyncedAt: new Date() }).where(eq(epgSources.id, id)); }
+export async function createEpgSource(input: { name: string; feedUrl: string; refreshThresholdHours: number }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.insert(epgSources).values({ ...input, status: "inactive" }); }
+export async function getEpgSourceById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(epgSources).where(eq(epgSources.id, id)).limit(1); return rows[0]; }
+export async function saveEpgSyncSuccess(input: { id: number; programmeCount: number; coverageEndsAt: Date }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const now = new Date(); await db.update(epgSources).set({ status: "healthy", programmeCount: input.programmeCount, coverageEndsAt: input.coverageEndsAt, lastSyncedAt: now, lastAttemptAt: now, lastError: null }).where(eq(epgSources.id, input.id)); }
+export async function saveEpgSyncFailure(id: number, message: string) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(epgSources).set({ status: "attention", lastAttemptAt: new Date(), lastError: message.slice(0, 2000) }).where(eq(epgSources.id, id)); }
 
 export async function listVodItems() { const db = await getDb(); return db ? db.select().from(vodItems).orderBy(desc(vodItems.updatedAt)) : []; }
-export async function createVodItem(input: { title: string; kind: "filme" | "serie" | "novela"; releaseYear?: number | null; sourceUrl?: string | null; synopsis?: string | null; posterUrl?: string | null }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.insert(vodItems).values({ ...input, status: input.sourceUrl ? "ready" : "draft" }); }
+export async function createVodItem(input: { title: string; kind: "filme" | "serie" | "novela"; releaseYear?: number | null; sourceUrl?: string | null; synopsis?: string | null; posterUrl?: string | null; ageRating?: number }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.insert(vodItems).values({ ...input, status: input.sourceUrl ? "ready" : "draft" }); }
 
 export async function listIntegrationSettings() {
   const db = await getDb();
