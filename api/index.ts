@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { createApp } from "../server/app.ts";
+import { createApp } from "../server/app";
 
 const app = createApp();
 
