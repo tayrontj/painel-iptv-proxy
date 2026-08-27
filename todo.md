@@ -45,3 +45,12 @@
 - [ ] Detectar no servidor manifestos M3U8 mestre por EXT-X-STREAM-INF e dispensar fontes separadas quando houver múltiplas qualidades no mesmo link.
 - [ ] Permitir configurar Origin e Referer personalizados por canal, armazenados no servidor e usados apenas ao consultar a fonte M3U8.
 - [ ] Associar Origin e Referer individualmente à origem e ao fallback de cada qualidade, permitindo hosts distintos dentro do mesmo canal.
+- [ ] Incluir logo e ID EPG, além de metadados operacionais, no cadastro de canal.
+- [ ] Incluir número do canal e classificação etária no cadastro e na resposta da API oficial.
+- [ ] Exigir autenticação e papel administrativo em todas as rotas e consultas do painel, sem dados administrativos incorporados no cliente.
+- [ ] Revisar a superfície de dados para que inspeção do navegador e overrides locais não concedam acesso nem revelem segredos ou conteúdos administrativos protegidos.
+- [ ] Criar um monitor periódico de canais que teste origem e fallback, registre estado e última verificação.
+- [ ] Exibir no dashboard e na lista de canais o estado operacional, falhas e uso de fallback de cada canal.
+- [ ] Testar cada link M3U8 individualmente, selecionar fallback saudável e excluir canais sem rota disponível da M3U e da API JSON.
+- [ ] Agendar a verificação de canais a cada cinco minutos com bloqueio de concorrência para não sobrepor rodadas ainda em execução.
+- [ ] Aplicar limite de dez segundos por link no monitor antes de acionar o fallback correspondente.

@@ -1,0 +1,1 @@
+ALTER TABLE `channels` ADD `channelNumber` int NOT NULL;

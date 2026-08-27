@@ -61,7 +61,7 @@ export async function createChannel(input: { name: string; groupTitle: string; s
   const db = await getDb();
   if (!db) throw new Error("Banco indisponível");
   const qualities = input.sources.map(source => source.quality).join(" · ");
-  const result = await db.insert(channels).values({ name: input.name, groupTitle: input.groupTitle, qualities, routeCount: input.sources.length, isActive: false });
+  const result = await db.insert(channels).values({ channelNumber: 0, name: input.name, groupTitle: input.groupTitle, qualities, routeCount: input.sources.length, isActive: false });
   const channelId = Number(result[0].insertId);
   await db.insert(channelSources).values(input.sources.map(source => ({ channelId, quality: source.quality, primaryUrl: source.primaryUrl, fallbackUrl: source.fallbackUrl || null })));
   return { id: channelId };

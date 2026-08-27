@@ -71,6 +71,20 @@
       "when": 1787791637330,
       "tag": "0009_fuzzy_shape",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1787792070531,
+      "tag": "0010_romantic_mentor",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1787792514362,
+      "tag": "0011_huge_hobgoblin",
+      "breakpoints": true
     }
   ]
 }
