@@ -1,59 +1,22 @@
 import * as db from "./db";
 import { shouldRefreshEpg } from "./epgCoverage";
 
-function parseXmltvDate(value: string) {
-  const match = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:\s*([+-])(\d{2})(\d{2}))?$/.exec(value.trim());
-  if (!match) return null;
-  const [, year, month, day, hour, minute, second, sign, offsetHours, offsetMinutes] = match;
-  let timestamp = Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
-  if (sign && offsetHours && offsetMinutes) {
-    const offset = (Number(offsetHours) * 60 + Number(offsetMinutes)) * 60_000;
-    timestamp += sign === "+" ? -offset : offset;
-  }
-  return new Date(timestamp);
+function parseXmltvDate(value: string) { const match = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:\s*([+-])(\d{2})(\d{2}))?$/.exec(value.trim()); if (!match) return null; const [, year, month, day, hour, minute, second, sign, offsetHours, offsetMinutes] = match; let timestamp = Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second)); if (sign && offsetHours && offsetMinutes) { const offset = (Number(offsetHours) * 60 + Number(offsetMinutes)) * 60_000; timestamp += sign === "+" ? -offset : offset; } return new Date(timestamp); }
+function decodeXml(value: string) { return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim(); }
+function tagText(xml: string, tag: string) { const match = new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i").exec(xml); return match ? decodeXml(match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")) : ""; }
+function programmeRating(xml: string) { const value = tagText(xml, "value"); const rating = Number(/\d{1,2}/.exec(value)?.[0] || 0); return [0, 10, 12, 14, 16, 18].includes(rating) ? rating : 0; }
+type ParsedProgramme = { channelEpgId: string; title: string; synopsis: string | null; startsAt: Date; endsAt: Date; ageRating: number };
+
+async function readXmltv(feedUrl: string, now: Date) {
+  const url = new URL(feedUrl); if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("A fonte XMLTV deve usar HTTP ou HTTPS");
+  const response = await fetch(url, { headers: { Accept: "application/xml,text/xml,text/plain" }, signal: AbortSignal.timeout(60_000) }); if (!response.ok) throw new Error(`A fonte XMLTV respondeu HTTP ${response.status}`);
+  const document = await response.text(); const matches = Array.from(document.matchAll(/<programme\b([^>]*)>([\s\S]*?)<\/programme>/gi));
+  const entries = matches.map(match => { const start = /\bstart\s*=\s*["']([^"']+)["']/i.exec(match[1])?.[1], stop = /\bstop\s*=\s*["']([^"']+)["']/i.exec(match[1])?.[1], channelEpgId = /\bchannel\s*=\s*["']([^"']+)["']/i.exec(match[1])?.[1] || "", startsAt = start ? parseXmltvDate(start) : null, endsAt = stop ? parseXmltvDate(stop) : null; return { channelEpgId, startsAt, endsAt, title: tagText(match[2], "title"), synopsis: tagText(match[2], "desc") || null, ageRating: programmeRating(match[2]) }; });
+  const coverageEndsAt = entries.reduce<Date | null>((latest, entry) => entry.endsAt && entry.endsAt > now && (!latest || entry.endsAt > latest) ? entry.endsAt : latest, null); if (!coverageEndsAt) throw new Error("A fonte XMLTV não informou programação futura válida");
+  const programmes: ParsedProgramme[] = entries.flatMap(entry => entry.startsAt && entry.endsAt && entry.channelEpgId && entry.title ? [{ channelEpgId: entry.channelEpgId, title: entry.title, synopsis: entry.synopsis, startsAt: entry.startsAt, endsAt: entry.endsAt, ageRating: entry.ageRating }] : []);
+  return { programmeCount: matches.length, coverageEndsAt, programmes };
 }
 
-export async function inspectXmltvCoverage(feedUrl: string, now = new Date()) {
-  const url = new URL(feedUrl);
-  if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("A fonte XMLTV deve usar HTTP ou HTTPS");
-  const response = await fetch(url, { headers: { Accept: "application/xml,text/xml,text/plain" }, signal: AbortSignal.timeout(60_000) });
-  if (!response.ok) throw new Error(`A fonte XMLTV respondeu HTTP ${response.status}`);
-  const document = await response.text();
-  const programmes = Array.from(document.matchAll(/<programme\b([^>]*)>/gi));
-  const coverageEndsAt = programmes.reduce<Date | null>((latest, programme) => {
-    const stop = /\bstop\s*=\s*["']([^"']+)["']/i.exec(programme[1] ?? "")?.[1];
-    const end = stop ? parseXmltvDate(stop) : null;
-    return end && end > now && (!latest || end > latest) ? end : latest;
-  }, null);
-  if (!coverageEndsAt) throw new Error("A fonte XMLTV não informou programação futura válida");
-  return { programmeCount: programmes.length, coverageEndsAt };
-}
-
-export async function syncEpgSource(id: number, options: { force?: boolean; now?: Date } = {}) {
-  const source = await db.getEpgSourceById(id);
-  if (!source) throw new Error("Fonte EPG não encontrada");
-  if (!source.feedUrl) throw new Error("A fonte EPG não possui URL XMLTV configurada");
-  const now = options.now ?? new Date();
-  const refresh = options.force || shouldRefreshEpg({ coverageEndsAt: source.coverageEndsAt, refreshThresholdHours: source.refreshThresholdHours, lastSyncFailed: source.status === "attention", now });
-  if (!refresh) return { id: source.id, result: "skipped" as const, coverageEndsAt: source.coverageEndsAt };
-  try {
-    const summary = await inspectXmltvCoverage(source.feedUrl, now);
-    await db.saveEpgSyncSuccess({ id: source.id, ...summary });
-    return { id: source.id, result: "synced" as const, ...summary };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Falha desconhecida na leitura XMLTV";
-    await db.saveEpgSyncFailure(source.id, message);
-    throw new Error(message);
-  }
-}
-
-export async function syncEligibleEpgSources() {
-  const sources = await db.listEpgSources();
-  const results = [];
-  for (const source of sources) {
-    if (!source.feedUrl) continue;
-    try { results.push(await syncEpgSource(source.id)); }
-    catch (error) { results.push({ id: source.id, result: "failed" as const, error: error instanceof Error ? error.message : "Falha desconhecida" }); }
-  }
-  return results;
-}
+export async function inspectXmltvCoverage(feedUrl: string, now = new Date()) { const { programmeCount, coverageEndsAt } = await readXmltv(feedUrl, now); return { programmeCount, coverageEndsAt }; }
+export async function syncEpgSource(id: number, options: { force?: boolean; now?: Date } = {}) { const source = await db.getEpgSourceById(id); if (!source) throw new Error("Fonte EPG não encontrada"); if (!source.feedUrl) throw new Error("A fonte EPG não possui URL XMLTV configurada"); const now = options.now ?? new Date(); const refresh = options.force || shouldRefreshEpg({ coverageEndsAt: source.coverageEndsAt, refreshThresholdHours: source.refreshThresholdHours, lastSyncFailed: source.status === "attention", now }); if (!refresh) return { id: source.id, result: "skipped" as const, coverageEndsAt: source.coverageEndsAt }; try { const summary = await readXmltv(source.feedUrl, now); await db.replaceEpgProgrammes(source.id, summary.programmes); await db.saveEpgSyncSuccess({ id: source.id, programmeCount: summary.programmeCount, coverageEndsAt: summary.coverageEndsAt }); return { id: source.id, result: "synced" as const, programmeCount: summary.programmeCount, coverageEndsAt: summary.coverageEndsAt }; } catch (error) { const message = error instanceof Error ? error.message : "Falha desconhecida na leitura XMLTV"; await db.saveEpgSyncFailure(source.id, message); throw new Error(message); } }
+export async function syncEligibleEpgSources() { const sources = await db.listEpgSources(); const results = []; for (const source of sources) { if (!source.feedUrl) continue; try { results.push(await syncEpgSource(source.id)); } catch (error) { results.push({ id: source.id, result: "failed" as const, error: error instanceof Error ? error.message : "Falha desconhecida" }); } } return results; }

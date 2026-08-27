@@ -16,6 +16,7 @@ import {
   RadioTower,
   LogIn,
   Settings2,
+  Smartphone,
   UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -45,6 +46,7 @@ const navigation: { label: string; path?: string; icon: LucideIcon }[] = [
   { label: "EPG", path: "/epg", icon: Activity },
   { label: "Assinaturas PIX", path: "/assinaturas", icon: CircleDollarSign },
   { label: "Histórico PIX", path: "/historico-pix", icon: CircleDollarSign },
+  { label: "Atualizações Android", path: "/atualizacoes-android", icon: Smartphone },
   { label: "Configurações", path: "/integracoes", icon: Settings2 },
 ];
 
@@ -136,9 +138,9 @@ export default function PanelLayout({ children }: PanelLayoutProps) {
         <div className="flex min-h-[66px] items-center justify-between border-b border-white/[0.07] bg-[#091013]/90 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
           <div className="flex items-center gap-3 lg:hidden">
             <div className="grid h-8 w-8 place-items-center rounded-lg border border-[#43E6C2]/20 bg-[#43E6C2]/10">
-              <img src="/storage/nexus-frequency-mark_5dbca578.png" alt="Nexus Stream" className="h-5 w-5" />
+              <img src="/storage/nexus-frequency-mark_5dbca578.png" alt="Videlis" className="h-5 w-5" />
             </div>
-            <span className="text-sm font-semibold">Nexus Stream</span>
+            <span className="text-sm font-semibold">Videlis</span>
           </div>
           <div className="hidden items-center gap-2 lg:flex">
             <Cable className="h-3.5 w-3.5 text-[#43E6C2]" />

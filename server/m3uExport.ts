@@ -18,7 +18,7 @@ export async function exportM3u(req: Request, res: Response) {
   const access = await authenticateXtream(req);
   if (!access) { res.status(401).type("text/plain").send("Acesso não autorizado"); return; }
   const baseUrl = `${req.protocol}://${req.get("host")}`;
-  const channels = (await listChannels()).filter(channel => channel.isActive);
+  const channels = (await listChannels()).filter(channel => channel.isActive && channel.healthStatus !== "unavailable");
   const query = `username=${encodeURIComponent(access.username)}&password=${encodeURIComponent(access.password)}`;
   const body = ["#EXTM3U", ...channels.map(channel => `#EXTINF:-1 tvg-id="${escaped(channel.epgId || `channel-${channel.id}`)}" tvg-logo="${escaped(channel.logoUrl || "")}" tvg-chno="${channel.channelNumber}" group-title="${escaped(channel.groupTitle)}",${escaped(channel.name)}\n${baseUrl}/api/playback/${channel.id}?${query}`)].join("\n");
   res.setHeader("Content-Disposition", "attachment; filename=videlis.m3u");
@@ -57,7 +57,7 @@ export async function xtreamPlayerApi(req: Request, res: Response) {
   if (!access) { res.status(401).json({ user_info: { auth: 0 } }); return; }
   const baseUrl = `${req.protocol}://${req.get("host")}`;
   const action = value(req.query.action);
-  const channels = (await listChannels()).filter(channel => channel.isActive);
+  const channels = (await listChannels()).filter(channel => channel.isActive && channel.healthStatus !== "unavailable");
   const vod = await listVodItems();
   const serials = vod.filter(item => item.kind !== "filme");
   const userInfo = { username: access.username, password: access.password, auth: 1, status: "Active", exp_date: String(Math.floor(access.customer.expiresAt.getTime() / 1000)), is_trial: access.customer.trialEndsAt ? "1" : "0", active_cons: String(access.customer.usedScreens), max_connections: String(access.customer.screenLimit), allowed_output_formats: ["m3u8"] };

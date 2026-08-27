@@ -37,4 +37,8 @@ describe("autorização administrativa", () => {
     await expect(caller.billing.listForCustomer({ customerId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.integrations.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
+
+  it("nega releases Android para conta autenticada sem papel admin", async () => {
+    await expect(appRouter.createCaller(userContext("user")).androidUpdates.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
 });

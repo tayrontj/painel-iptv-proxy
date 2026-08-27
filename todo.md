@@ -15,7 +15,7 @@
 - [x] Revisar a interface final para confirmar que não há papéis, fluxos ou termos de revenda.
 - [x] Adicionar suporte persistente de capa ao VOD e salvar a capa escolhida a partir da busca de metadados.
 - [x] Implementar atualização de status PIX por notificação do Mercado Pago e exibir o histórico de cobranças no painel.
-- [ ] Criar procedimentos específicos para o aplicativo consumir o estado de assinatura, alertas e QR Code PIX.
+- [x] Criar procedimentos específicos para o aplicativo consumir o estado de assinatura, alertas e QR Code PIX.
 - [x] Substituir todos os prompts, alertas e confirmações nativos do navegador por caixas modais próprias do painel.
 - [x] Criar temporadas, episódios e capítulos vinculados ao título VOD, com inclusão incremental para séries semanais e novelas diárias.
 - [x] Criar uma tela de detalhes do VOD para cadastrar e publicar episódios/capítulos sem recriar a série ou novela.
@@ -28,11 +28,11 @@
 - [x] Reorganizar o formulário de criação de planos para caber no viewport, com agrupamento e rolagem interna responsiva.
 - [x] Adicionar no cadastro de canais URLs M3U8 de origem e fallback por qualidade, mantendo-as somente no servidor.
 - [x] Gerar listas M3U compatíveis para clientes externos, sem reutilizar a API oficial do aplicativo.
-- [ ] Criar API oficial do aplicativo com catálogo, assinaturas, canais e sinalização explícita de conteúdo 18+ para bloqueio local.
-- [ ] Aplicar a trava 18+ também a programas EPG, filmes, séries, novelas e episódios na API oficial.
-- [ ] Garantir que a API não armazene PIN nem bloqueie conteúdo, retornando apenas a sinalização etária para controle local do aplicativo.
+- [x] Criar API oficial do aplicativo com catálogo, assinaturas, canais e sinalização explícita de conteúdo 18+ para bloqueio local.
+- [x] Aplicar a trava 18+ também a programas EPG, filmes, séries, novelas e episódios na API oficial.
+- [x] Garantir que a API não armazene PIN nem bloqueie conteúdo, retornando apenas a sinalização etária para controle local do aplicativo.
 - [x] Implementar o endpoint privado de reprodução usado pela M3U, com credenciais Xtream, qualidade e fallback selecionados sem expor fontes de origem.
-- [ ] Expandir a API oficial para retornar programas EPG e episódios VOD com sua classificação etária.
+- [x] Expandir a API oficial para retornar programas EPG e episódios VOD com sua classificação etária.
 - [ ] Implementar compatibilidade Xtream V2 com credenciais próprias de cliente, sem usar o token de ativação do aplicativo.
 - [x] Cobrir por testes a exportação M3U e o handshake Xtream V2 autenticados por usuário e senha numéricos.
 - [x] Migrar as rotas públicas do aplicativo para autenticação por usuário e senha Xtream, mantendo a API oficial separada da superfície externa.
@@ -60,10 +60,10 @@
 - [ ] Auditar a superfície pública do aplicativo para assegurar que não há estado, segredos ou dados administrativos incorporados sem autorização server-side.
 - [x] Substituir a tela explicativa de acesso restrito por uma página de login administrativo direta.
 - [x] Substituir o login OAuth visível por uma página própria do Nexus Stream com usuário e senha administrativos configurados de forma segura no servidor.
-- [ ] Adaptar a arquitetura para Vercel Hobby, consolidando funções e evitando multiplicação desnecessária de endpoints e tarefas agendadas.
+- [x] Adaptar a arquitetura para Vercel Hobby, consolidando funções e evitando multiplicação desnecessária de endpoints e tarefas agendadas.
 - [ ] Migrar o banco de produção para PostgreSQL Neon e preparar um seeder idempotente de administrador e dados demonstrativos.
-- [ ] Preparar a entrega para Vercel Hobby com uma função Node consolidada e sem cron nativo a cada cinco minutos.
-- [ ] Criar um contrato autenticado para Cloudflare Worker disparar monitoramento de canais e decisão de sincronização EPG sem cron frequente na Vercel.
+- [x] Preparar a entrega para Vercel Hobby com uma função Node consolidada e sem cron nativo a cada cinco minutos.
+- [x] Criar um contrato autenticado para Cloudflare Worker disparar monitoramento de canais e decisão de sincronização EPG sem cron frequente na Vercel.
 - [ ] Documentar as variáveis de Neon, administrador local e agendador externo sem inserir valores ou abrir conexões nesta etapa.
 - [x] Renomear a rota pública de ativos de `/manus-storage` para `/storage` em todo o Nexus Stream.
 - [ ] Pesquisar e propor um novo nome distintivo para o painel IPTV, com triagem de uso aparente no setor antes de rebatizar a interface.
@@ -76,14 +76,14 @@
 - [ ] Criar e triar nomes inspirados no latim, relacionados a visão, luz, sinal ou movimento, antes de rebatizar o painel.
 - [ ] Substituir a identidade Nexus Stream por Videlis em títulos, textos, metadados e configurações visíveis.
 - [x] Auditar os estados do backlog e reabrir itens marcados como concluídos sem implementação e validação verificáveis.
-- [ ] Criar um monitor periódico de canais que teste origem e fallback, registre estado e última verificação.
-- [ ] Exibir no dashboard e na lista de canais o estado operacional, falhas e uso de fallback de cada canal.
-- [ ] Testar cada link M3U8 individualmente, selecionar fallback saudável e excluir canais sem rota disponível da M3U e da API JSON.
-- [ ] Agendar a verificação de canais a cada cinco minutos com bloqueio de concorrência para não sobrepor rodadas ainda em execução.
-- [ ] Aplicar limite de dez segundos por link no monitor antes de acionar o fallback correspondente.
-- [ ] Ativar automaticamente o monitor de canais de cinco minutos ao cadastrar o primeiro canal.
-- [ ] Sincronizar EPG incrementalmente em cadência adaptável à cobertura de 24 ou 48 horas, com última leitura e falhas visíveis no painel.
-- [ ] Acionar a sincronização do EPG somente quando a cobertura futura restante estiver abaixo do limiar configurado ou quando a última leitura falhar.
+- [x] Criar um monitor periódico de canais que teste origem e fallback, registre estado e última verificação.
+- [x] Exibir no dashboard e na lista de canais o estado operacional, falhas e uso de fallback de cada canal.
+- [x] Testar cada link M3U8 individualmente, selecionar fallback saudável e excluir canais sem rota disponível da M3U e da API JSON.
+- [x] Agendar a verificação de canais a cada cinco minutos com bloqueio de concorrência para não sobrepor rodadas ainda em execução.
+- [x] Aplicar limite de dez segundos por link no monitor antes de acionar o fallback correspondente.
+- [x] Ativar automaticamente o monitor de canais de cinco minutos ao cadastrar o primeiro canal.
+- [x] Sincronizar EPG incrementalmente em cadência adaptável à cobertura de 24 ou 48 horas, com última leitura e falhas visíveis no painel.
+- [x] Acionar a sincronização do EPG somente quando a cobertura futura restante estiver abaixo do limiar configurado ou quando a última leitura falhar.
 - [x] Atualizar a interface EPG para comunicar sincronização inteligente por cobertura, substituindo referências a leitura contínua.
 - [x] Completar o modal de adicionar cliente com nome, e-mail, telefone e seleção clara de plano/ciclo.
 - [x] Reconstruir o modal de adicionar canal com logo, ID EPG, número, classificação, modo master ou qualidades separadas e cabeçalhos/fallback individuais por link.
@@ -91,3 +91,8 @@
 - [x] Corrigir comboboxes e opções do painel para manter contraste legível no tema escuro.
 - [x] Substituir o seletor nativo remanescente de classificação indicativa no cadastro VOD pelo combobox escuro do painel.
 - [x] Aceitar URLs de mídia em formatos livres para filmes, séries, novelas e episódios, sem restringir a extensão do arquivo.
+- [x] Remover dados simulados e métricas fictícias da interface, exibindo somente dados reais ou estados vazios orientativos.
+- [x] Manter dados demonstrativos exclusivamente no seeder idempotente para uso posterior no Neon, sem conteúdos embutidos no cliente.
+- [x] Definir um mecanismo próprio e seguro de verificação de atualização nativa para distribuição do aplicativo fora da Play Store.
+- [x] Preparar contrato de versão, metadados de release, integridade criptográfica e instruções de hospedagem para atualizações nativas.
+- [x] Restringir o desenho de distribuição e atualização nativa ao Android, sem fluxo de iOS ou App Store.

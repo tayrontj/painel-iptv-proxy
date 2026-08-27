@@ -12,6 +12,7 @@ if (password.length < 12) throw new Error("NEXUS_ADMIN_PASSWORD deve ter pelo me
 
 const sql = neon(connectionString);
 const stableTokenHash = value => createHash("sha256").update(value).digest("hex");
+const numericCredential = length => Array.from({ length }, () => String(Math.floor(Math.random() * 10))).join("");
 const passwordHash = value => {
   const salt = randomBytes(16).toString("base64url");
   return `scrypt$${salt}$${scryptSync(value, salt, 64).toString("base64url")}`;
@@ -43,11 +44,25 @@ async function ensureChannel(channelNumber, name, groupTitle, epgId, rating) {
   if (!exists.length) await sql`INSERT INTO channels (channel_number, name, group_title, epg_id, qualities, age_rating, route_count, is_active) VALUES (${channelNumber}, ${name}, ${groupTitle}, ${epgId}, 'HD', ${rating}, 1, false)`;
 }
 
+async function ensureDemoCustomer(planId) {
+  const email = "demo@videlis.local";
+  const exists = await sql`SELECT id FROM customers WHERE email = ${email} LIMIT 1`;
+  if (exists.length) return;
+  const [cycle] = await sql`SELECT id FROM plan_cycles WHERE plan_id = ${planId} AND cycle = 'monthly' LIMIT 1`;
+  if (!cycle) throw new Error("Ciclo mensal demonstrativo não encontrado.");
+  const xtreamUsername = numericCredential(10);
+  const xtreamPassword = numericCredential(12);
+  await sql`INSERT INTO customers (label, email, phone, plan, plan_id, plan_cycle_id, screen_limit, used_screens, expires_at, access_token_hash, xtream_username, xtream_password_hash, status) VALUES ('Cliente demonstrativo', ${email}, NULL, 'Essencial', ${planId}, ${cycle.id}, 1, 0, ${new Date(Date.now() + 14 * 86_400_000)}, ${stableTokenHash(randomBytes(32).toString("base64url"))}, ${xtreamUsername}, ${stableTokenHash(xtreamPassword)}, 'attention')`;
+}
+
 async function seed() {
   const existingAdmin = await sql`SELECT password_hash FROM users WHERE open_id = ${adminOpenId} LIMIT 1`;
   const hash = existingAdmin[0]?.password_hash || passwordHash(password);
-  await sql`INSERT INTO users (open_id, name, email, login_method, password_hash, role, last_signed_in) VALUES (${adminOpenId}, 'Administrador Nexus', NULL, 'local', ${hash}, 'admin', ${now}) ON CONFLICT (open_id) DO UPDATE SET name = EXCLUDED.name, login_method = EXCLUDED.login_method, role = 'admin', updated_at = NOW()`;
-  for (const plan of plans) await upsertPlan(plan);
+  await sql`INSERT INTO users (open_id, name, email, login_method, password_hash, role, last_signed_in) VALUES (${adminOpenId}, 'Administrador Videlis', NULL, 'local', ${hash}, 'admin', ${now}) ON CONFLICT (open_id) DO UPDATE SET name = EXCLUDED.name, login_method = EXCLUDED.login_method, role = 'admin', updated_at = NOW()`;
+  let demoPlanId;
+  for (const plan of plans) { const planId = await upsertPlan(plan); if (plan.name === "Essencial") demoPlanId = planId; }
+  if (!demoPlanId) throw new Error("Plano demonstrativo não encontrado.");
+  await ensureDemoCustomer(demoPlanId);
   await ensureVod("Catálogo demonstrativo: filme", "filme", 2026, 0);
   await ensureVod("Catálogo demonstrativo: série", "serie", 2026, 12);
   await ensureVod("Catálogo demonstrativo: novela", "novela", 2026, 10);

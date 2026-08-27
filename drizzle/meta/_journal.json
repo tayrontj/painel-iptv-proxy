@@ -36,6 +36,27 @@
       "when": 1787825768799,
       "tag": "0004_shiny_inertia",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787826198792,
+      "tag": "0005_common_phil_sheldon",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787826777912,
+      "tag": "0006_clumsy_doctor_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787827937327,
+      "tag": "0007_eminent_gladiator",
+      "breakpoints": true
     }
   ]
 }

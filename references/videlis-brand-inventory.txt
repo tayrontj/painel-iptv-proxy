@@ -1,0 +1,10 @@
+client/src/App.tsx
+client/src/components/PanelLayout.tsx
+client/src/index.css
+client/src/pages/Home.tsx
+client/src/pages/VodPage.tsx
+client/src/pages/AdminPages.tsx
+client/src/pages/AdminLoginPage.tsx
+server/db.ts
+server/seed.mjs
+template.json

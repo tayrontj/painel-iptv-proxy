@@ -3,18 +3,18 @@ import { describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getCustomerByXtreamCredentials: vi.fn(),
   listPixChargesForCustomer: vi.fn(),
-  listCustomerDevices: vi.fn(), registerCustomerDevice: vi.fn(), removeCustomerDevice: vi.fn(), updateCustomerProfile: vi.fn(), applyCustomerPlanChange: vi.fn(), listPlans: vi.fn(), getPlanCycle: vi.fn(), createPixCharge: vi.fn(),
+  listCustomerDevices: vi.fn(), registerCustomerDevice: vi.fn(), removeCustomerDevice: vi.fn(), updateCustomerProfile: vi.fn(), applyCustomerPlanChange: vi.fn(), listPlans: vi.fn(), getPlanCycle: vi.fn(), createPixCharge: vi.fn(), listEpgProgrammes: vi.fn(), listChannels: vi.fn(), listVodItems: vi.fn(), listVodEpisodes: vi.fn(),
 }));
 
 vi.mock("./db", () => ({
   getCustomerByXtreamCredentials: mocks.getCustomerByXtreamCredentials,
   listPixChargesForCustomer: mocks.listPixChargesForCustomer,
   listPlans: mocks.listPlans, getPlanCycle: mocks.getPlanCycle, applyCustomerPlanChange: mocks.applyCustomerPlanChange,
-  listChannels: vi.fn(), listVodItems: vi.fn(), listEpgSources: vi.fn(),
+  listChannels: mocks.listChannels, listVodItems: mocks.listVodItems, listEpgSources: vi.fn(), listEpgProgrammes: mocks.listEpgProgrammes,
   authenticateAdmin: vi.fn(), listIntegrationSettings: vi.fn(), saveIntegrationSetting: vi.fn(),
   getCustomerById: vi.fn(), createPixCharge: mocks.createPixCharge, listCustomers: vi.fn(), createCustomer: vi.fn(), updateCustomerStatus: vi.fn(), updateCustomerProfile: mocks.updateCustomerProfile,
   listCustomerDevices: mocks.listCustomerDevices, registerCustomerDevice: mocks.registerCustomerDevice, removeCustomerDevice: mocks.removeCustomerDevice,
-  inspectM3uManifest: vi.fn(), createEpgSource: vi.fn(), listVodSeasons: vi.fn(), listVodEpisodes: vi.fn(), createVodSeason: vi.fn(), createVodEpisode: vi.fn(), createVodItem: vi.fn(),
+  inspectM3uManifest: vi.fn(), createEpgSource: vi.fn(), listVodSeasons: vi.fn(), listVodEpisodes: mocks.listVodEpisodes, createVodSeason: vi.fn(), createVodEpisode: vi.fn(), createVodItem: vi.fn(),
 }));
 
 const paymentMocks = vi.hoisted(() => ({ createMercadoPagoPix: vi.fn(), searchVodMetadata: vi.fn(), getVodMetadataByTmdbId: vi.fn() }));
@@ -68,5 +68,16 @@ describe("API oficial autenticada por Xtream", () => {
     expect(result).toMatchObject({ status: "pending", planName: "Premium", amountCents: 2700 });
     expect(mocks.createPixCharge).toHaveBeenCalledWith(expect.objectContaining({ customerId: 7, requestedPlanId: 2, requestedPlanCycleId: 5, amountCents: 2700 }));
     expect(mocks.applyCustomerPlanChange).not.toHaveBeenCalled();
+  });
+
+  it("entrega catálogo e EPG com sinalização 18+ sem URL de origem ou PIN", async () => {
+    mocks.getCustomerByXtreamCredentials.mockResolvedValue(customer);
+    mocks.listChannels.mockResolvedValue([{ id: 9, isActive: true, name: "Canal adulto", groupTitle: "Filmes", channelNumber: 9, logoUrl: null, epgId: "adulto.9", qualities: ["FHD"], ageRating: 18, primaryUrl: "https://origem.exemplo/live.m3u8" }]);
+    mocks.listVodItems.mockResolvedValue([{ id: 21, kind: "serie", title: "Série adulta", tmdbId: 500, synopsis: "", posterUrl: null, releaseYear: 2026, ageRating: 18, sourceUrl: "https://origem.exemplo/serie" }]);
+    mocks.listVodEpisodes.mockResolvedValue([{ id: 31, seasonId: null, episodeNumber: 1, title: "Episódio 1", publishedAt: new Date("2026-08-27T00:00:00Z"), sourceUrl: "https://origem.exemplo/episodio.m3u8" }]);
+    mocks.listEpgProgrammes.mockResolvedValue([{ id: 41, channelEpgId: "adulto.9", title: "Programa adulto", synopsis: null, startsAt: new Date(), endsAt: new Date(), ageRating: 18 }]);
+    const result = await appRouter.createCaller(ctx).app.catalog({ username: "1234567890", password: "987654321012" });
+    expect(result.playback).toMatchObject({ credentialTransport: "headers", usernameHeader: "x-videlis-username" }); expect(result.channels[0]).toMatchObject({ id: 9, playbackPath: "/api/app/playback/live/9", requiresAdultPin: true, ageRating: 18 }); expect(result.vod[0]).toMatchObject({ tmdbId: 500, playbackPath: null, requiresAdultPin: true }); expect(result.episodes[0]).toMatchObject({ id: 31, playbackPath: "/api/app/playback/episode/31", requiresAdultPin: true }); expect(result.epg[0]).toMatchObject({ id: 41, channelId: 9, requiresAdultPin: true });
+    expect(JSON.stringify(result)).not.toContain("origem.exemplo"); expect(JSON.stringify(result)).not.toContain("987654321012");
   });
 });

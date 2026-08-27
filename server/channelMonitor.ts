@@ -1,28 +1,10 @@
+import * as db from "./db";
+
 export type LinkCheck = { ok: boolean; status: number | null; latencyMs: number; error?: string };
 export type SourceMonitorResult = { primary: LinkCheck; fallback?: LinkCheck; selected: "primary" | "fallback" | null };
+export const SOURCE_CHECK_TIMEOUT_MS = 10_000;
 
-let running = false;
-
-async function check(url: string, headers: Record<string, string> = {}): Promise<LinkCheck> {
-  const startedAt = Date.now();
-  try {
-    const response = await fetch(url, { method: "GET", headers, signal: AbortSignal.timeout(10_000) });
-    return { ok: response.ok, status: response.status, latencyMs: Date.now() - startedAt };
-  } catch (error) {
-    return { ok: false, status: null, latencyMs: Date.now() - startedAt, error: error instanceof Error ? error.message : "Falha ao consultar fonte" };
-  }
-}
-
-export async function monitorSource(input: { primaryUrl: string; fallbackUrl?: string | null; primaryHeaders?: Record<string, string>; fallbackHeaders?: Record<string, string> }): Promise<SourceMonitorResult> {
-  const primary = await check(input.primaryUrl, input.primaryHeaders);
-  if (primary.ok) return { primary, selected: "primary" };
-  if (!input.fallbackUrl) return { primary, selected: null };
-  const fallback = await check(input.fallbackUrl, input.fallbackHeaders);
-  return { primary, fallback, selected: fallback.ok ? "fallback" : null };
-}
-
-export async function runChannelMonitor<T>(task: () => Promise<T>): Promise<{ skipped: boolean; result?: T }> {
-  if (running) return { skipped: true };
-  running = true;
-  try { return { skipped: false, result: await task() }; } finally { running = false; }
-}
+async function check(url: string, headers: Record<string, string> = {}): Promise<LinkCheck> { const startedAt = Date.now(); try { const response = await fetch(url, { method: "GET", headers, signal: AbortSignal.timeout(SOURCE_CHECK_TIMEOUT_MS) }); return { ok: response.ok, status: response.status, latencyMs: Date.now() - startedAt }; } catch (error) { return { ok: false, status: null, latencyMs: Date.now() - startedAt, error: error instanceof Error ? error.message : "Falha ao consultar fonte" }; } }
+function headers(origin: string | null, referer: string | null) { return { ...(origin ? { Origin: origin } : {}), ...(referer ? { Referer: referer } : {}) }; }
+export async function monitorSource(input: { primaryUrl: string; fallbackUrl?: string | null; primaryHeaders?: Record<string, string>; fallbackHeaders?: Record<string, string> }): Promise<SourceMonitorResult> { const primary = await check(input.primaryUrl, input.primaryHeaders); if (primary.ok) return { primary, selected: "primary" }; if (!input.fallbackUrl) return { primary, selected: null }; const fallback = await check(input.fallbackUrl, input.fallbackHeaders); return { primary, fallback, selected: fallback.ok ? "fallback" : null }; }
+export async function runPersistedChannelMonitor() { const acquired = await db.tryAcquireSchedulerLock("channel-monitor", 14 * 60_000); if (!acquired) return { skipped: true as const, checked: 0, healthy: 0, fallback: 0, unavailable: 0 }; try { const sources = await db.listChannelSourcesForMonitor(); const byChannel = new Map<number, Array<"primary" | "fallback" | "unavailable">>(); for (const source of sources) { const result = await monitorSource({ primaryUrl: source.primaryUrl, fallbackUrl: source.fallbackUrl, primaryHeaders: headers(source.primaryOrigin, source.primaryReferer), fallbackHeaders: headers(source.fallbackOrigin, source.fallbackReferer) }); const selected = result.selected ?? "unavailable"; await db.saveChannelSourceHealth({ id: source.id, selectedRoute: selected, primary: result.primary, fallback: result.fallback }); byChannel.set(source.channelId, [...(byChannel.get(source.channelId) ?? []), selected]); } let healthy = 0, fallback = 0, unavailable = 0; for (const [channelId, routes] of Array.from(byChannel.entries())) { const status = routes.includes("primary") ? "healthy" : routes.includes("fallback") ? "fallback" : "unavailable"; if (status === "healthy") healthy += 1; else if (status === "fallback") fallback += 1; else unavailable += 1; await db.saveChannelHealth({ channelId, healthStatus: status, healthMessage: status === "unavailable" ? "Nenhuma rota respondeu dentro do limite de 10 segundos." : null }); } return { skipped: false as const, checked: sources.length, healthy, fallback, unavailable }; } finally { await db.releaseSchedulerLock("channel-monitor"); } }

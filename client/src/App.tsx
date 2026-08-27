@@ -1,5 +1,5 @@
 /**
- * Roteamento principal do painel Nexus Stream, com rotas da visão operacional
+ * Roteamento principal do painel Videlis, com rotas da visão operacional
  * e do cadastro de conteúdo VOD dentro de um tema administrativo escuro.
  */
 import { Toaster } from "@/components/ui/sonner";
@@ -8,7 +8,8 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { ChannelsPage, EpgPage, SubscriptionsPage } from "./pages/AdminPages";
+import { EpgPage, SubscriptionsPage } from "./pages/AdminPages";
+import ChannelsPage from "./pages/ChannelsPage";
 import CustomersPage from "./pages/CustomersPage";
 import Home from "./pages/Home";
 import IntegrationsPage from "./pages/IntegrationsPage";
@@ -17,6 +18,7 @@ import VodEpisodesPage from "./pages/VodEpisodesPage";
 import M3uPage from "./pages/M3uPage";
 import PixHistoryPage from "./pages/PixHistoryPage";
 import VodPage from "./pages/VodPage";
+import AndroidUpdatesPage from "./pages/AndroidUpdatesPage";
 import { AdminAccessGate } from "./components/PanelLayout";
 
 function AdminRoute({ path, component: Component }: { path: string; component: React.ComponentType }) {
@@ -36,6 +38,7 @@ function Router() {
       <AdminRoute path="/epg" component={EpgPage} />
       <AdminRoute path="/assinaturas" component={SubscriptionsPage} />
       <AdminRoute path="/historico-pix" component={PixHistoryPage} />
+      <AdminRoute path="/atualizacoes-android" component={AndroidUpdatesPage} />
       <AdminRoute path="/integracoes" component={IntegrationsPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

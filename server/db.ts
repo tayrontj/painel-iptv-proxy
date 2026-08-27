@@ -1,10 +1,10 @@
-/** Acesso de dados PostgreSQL do Nexus Stream, compatível com Neon. */
+/** Acesso de dados PostgreSQL do Videlis, compatível com Neon. */
 import { createHash, randomBytes, randomInt } from "node:crypto";
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import * as schema from "../drizzle/schema";
-import { channelSources, channels, customerDevices, customers, epgSources, integrationSettings, type InsertUser, planCycles, plans, pixCharges, users, vodEpisodes, vodItems, vodSeasons } from "../drizzle/schema";
+import { androidReleases, channelSources, channels, customerDevices, customers, epgProgrammes, epgSources, integrationSettings, schedulerLocks, type InsertUser, planCycles, plans, pixCharges, users, vodEpisodes, vodItems, vodSeasons } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { encryptIntegrationSecret } from "./integrationSecrets";
 import { adminOpenId, verifyAdminPassword } from "./adminCredentials";
@@ -92,6 +92,11 @@ export async function createChannel(input: { name: string; groupTitle: string; c
   return inserted;
 }
 export async function getChannelSources(channelId: number) { const db = await getDb(); return db ? db.select().from(channelSources).where(eq(channelSources.channelId, channelId)) : []; }
+export async function listChannelSourcesForMonitor() { const db = await getDb(); return db ? db.select().from(channelSources).orderBy(channelSources.id) : []; }
+export async function saveChannelSourceHealth(input: { id: number; selectedRoute: "primary" | "fallback" | "unavailable"; primary: { status: number | null; latencyMs: number; error?: string }; fallback?: { status: number | null; latencyMs: number; error?: string } }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(channelSources).set({ primaryLastStatus: input.primary.status, primaryLatencyMs: input.primary.latencyMs, primaryLastError: input.primary.error ?? null, fallbackLastStatus: input.fallback?.status ?? null, fallbackLatencyMs: input.fallback?.latencyMs ?? null, fallbackLastError: input.fallback?.error ?? null, selectedRoute: input.selectedRoute, lastCheckedAt: new Date() }).where(eq(channelSources.id, input.id)); }
+export async function saveChannelHealth(input: { channelId: number; healthStatus: "healthy" | "fallback" | "unavailable"; healthMessage?: string | null }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(channels).set({ healthStatus: input.healthStatus, healthMessage: input.healthMessage ?? null, lastHealthAt: new Date() }).where(eq(channels.id, input.channelId)); }
+export async function tryAcquireSchedulerLock(name: string, leaseMilliseconds: number) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const now = new Date(); const lockedUntil = new Date(now.getTime() + leaseMilliseconds); const result = await db.execute(sql`INSERT INTO scheduler_locks (name, locked_until, updated_at) VALUES (${name}, ${lockedUntil}, NOW()) ON CONFLICT (name) DO UPDATE SET locked_until = EXCLUDED.locked_until, updated_at = NOW() WHERE scheduler_locks.locked_until <= ${now} RETURNING name`); return Array.isArray((result as { rows?: unknown[] }).rows) && Boolean((result as { rows?: unknown[] }).rows?.length); }
+export async function releaseSchedulerLock(name: string) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(schedulerLocks).set({ lockedUntil: new Date(0) }).where(eq(schedulerLocks.name, name)); }
 export async function toggleChannel(id: number, isActive: boolean) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(channels).set({ isActive }).where(eq(channels.id, id)); }
 
 export async function listEpgSources() { const db = await getDb(); return db ? db.select().from(epgSources).orderBy(desc(epgSources.updatedAt)) : []; }
@@ -99,6 +104,8 @@ export async function createEpgSource(input: { name: string; feedUrl: string; re
 export async function getEpgSourceById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(epgSources).where(eq(epgSources.id, id)).limit(1); return rows[0]; }
 export async function saveEpgSyncSuccess(input: { id: number; programmeCount: number; coverageEndsAt: Date }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const now = new Date(); await db.update(epgSources).set({ status: "healthy", programmeCount: input.programmeCount, coverageEndsAt: input.coverageEndsAt, lastSyncedAt: now, lastAttemptAt: now, lastError: null }).where(eq(epgSources.id, input.id)); }
 export async function saveEpgSyncFailure(id: number, message: string) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(epgSources).set({ status: "attention", lastAttemptAt: new Date(), lastError: message.slice(0, 2000) }).where(eq(epgSources.id, id)); }
+export async function replaceEpgProgrammes(sourceId: number, programmes: Array<{ channelEpgId: string; title: string; synopsis?: string | null; startsAt: Date; endsAt: Date; ageRating: number }>) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.delete(epgProgrammes).where(eq(epgProgrammes.sourceId, sourceId)); if (programmes.length) await db.insert(epgProgrammes).values(programmes.map(programme => ({ ...programme, sourceId }))); }
+export async function listEpgProgrammes(channelEpgIds: string[], now = new Date()) { const db = await getDb(); if (!db || !channelEpgIds.length) return []; return db.select().from(epgProgrammes).where(and(inArray(epgProgrammes.channelEpgId, channelEpgIds), sql`${epgProgrammes.endsAt} > ${now}`)).orderBy(epgProgrammes.startsAt); }
 
 export async function listVodItems() { const db = await getDb(); return db ? db.select().from(vodItems).orderBy(desc(vodItems.updatedAt)) : []; }
 export async function getVodItemById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(vodItems).where(eq(vodItems.id, id)).limit(1); return rows[0]; }
@@ -113,6 +120,14 @@ export async function saveIntegrationSetting(input: { provider: string; label: s
   const values = { provider: input.provider, label: input.label, baseUrl: input.baseUrl ?? null, enabled: input.enabled, ...(encrypted ? { secretCiphertext: encrypted.ciphertext, secretIv: encrypted.iv, secretTag: encrypted.tag, secretHint: encrypted.hint } : {}) };
   await db.insert(integrationSettings).values(values).onConflictDoUpdate({ target: integrationSettings.provider, set: { label: values.label, baseUrl: values.baseUrl, enabled: values.enabled, ...(encrypted ? { secretCiphertext: encrypted.ciphertext, secretIv: encrypted.iv, secretTag: encrypted.tag, secretHint: encrypted.hint } : {}) } });
 }
+
+export type AndroidReleaseInput = { versionCode: number; versionName: string; apkUrl: string; apkSizeBytes: number; sha256: string; minimumSupportedVersionCode?: number | null; mandatory: boolean; releaseNotes: string };
+export async function listAndroidReleases() { const db = await getDb(); return db ? db.select().from(androidReleases).orderBy(desc(androidReleases.versionCode)) : []; }
+export async function getAndroidReleaseById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(androidReleases).where(eq(androidReleases.id, id)).limit(1); return rows[0]; }
+export async function getLatestPublishedAndroidRelease() { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(androidReleases).where(eq(androidReleases.status, "published")).orderBy(desc(androidReleases.versionCode)).limit(1); return rows[0]; }
+export async function createAndroidRelease(input: AndroidReleaseInput) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const [release] = await db.insert(androidReleases).values({ ...input, minimumSupportedVersionCode: input.minimumSupportedVersionCode ?? null, sha256: input.sha256.toLowerCase(), status: "draft" }).returning({ id: androidReleases.id }); return release; }
+export async function publishAndroidRelease(input: { id: number; manifestSignature: string; signingKeyId: string }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const [release] = await db.update(androidReleases).set({ status: "published", manifestSignature: input.manifestSignature, signingKeyId: input.signingKeyId, publishedAt: new Date() }).where(eq(androidReleases.id, input.id)).returning({ id: androidReleases.id }); if (!release) throw new Error("Release Android não encontrada"); await db.update(androidReleases).set({ status: "archived" }).where(and(sql`${androidReleases.id} <> ${input.id}`, eq(androidReleases.status, "published"))); return release; }
+export async function archiveAndroidRelease(id: number) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(androidReleases).set({ status: "archived" }).where(eq(androidReleases.id, id)); }
 
 export async function createPixCharge(input: { customerId: number; amountCents: number; providerPaymentId: string; externalReference: string; requestedPlanId?: number | null; requestedPlanCycleId?: number | null; qrCode: string | null; qrCodeBase64: string | null; dueAt: Date }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.insert(pixCharges).values({ ...input, status: "pending" }); }
 export async function listPixChargesForCustomer(customerId: number) { const db = await getDb(); return db ? db.select().from(pixCharges).where(eq(pixCharges.customerId, customerId)).orderBy(desc(pixCharges.createdAt)) : []; }

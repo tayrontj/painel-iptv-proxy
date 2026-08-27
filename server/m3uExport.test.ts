@@ -40,6 +40,14 @@ describe("exportação Xtream V2", () => {
     expect(res.send.mock.calls[0][0]).not.toContain("token=");
   });
 
+  it("omite canais marcados como indisponíveis da lista M3U", async () => {
+    mocks.listChannels.mockResolvedValue([{ id: 10, isActive: true, healthStatus: "healthy", name: "Canal saudável", groupTitle: "Ao vivo", epgId: null, logoUrl: null, channelNumber: 10, updatedAt: new Date() }, { id: 11, isActive: true, healthStatus: "unavailable", name: "Canal indisponível", groupTitle: "Ao vivo", epgId: null, logoUrl: null, channelNumber: 11, updatedAt: new Date() }]);
+    const res = response();
+    await exportM3u({ query: { username: "1234567890", password: "987654321012" }, params: {}, protocol: "https", get: () => "painel.exemplo.com" } as any, res);
+    expect(res.send.mock.calls[0][0]).toContain("Canal saudável");
+    expect(res.send.mock.calls[0][0]).not.toContain("Canal indisponível");
+  });
+
   it("nega uma lista quando as credenciais não autenticam", async () => {
     mocks.getCustomerByXtreamCredentials.mockResolvedValue(undefined);
     const res = response();
