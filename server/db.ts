@@ -2,7 +2,7 @@
  * Acesso a dados do Nexus Stream. Mantém operações administrativas, de VOD e
  * de cobrança centralizadas, sem devolver segredos de integrações ao cliente.
  */
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { channelSources, channels, customers, epgSources, integrationSettings, InsertUser, planCycles, plans, pixCharges, users, vodEpisodes, vodItems, vodSeasons } from "../drizzle/schema";
@@ -35,6 +35,7 @@ export async function getUserByOpenId(openId: string) {
 }
 
 function hashAccessToken(value: string) { return createHash("sha256").update(value).digest("hex"); }
+function randomDigits(length = 10) { return Array.from({ length }, () => randomInt(0, 10)).join(""); }
 
 export async function listCustomers() { const db = await getDb(); return db ? db.select().from(customers).orderBy(desc(customers.updatedAt)) : []; }
 export async function createCustomer(input: { label: string; planId: number; planCycleId: number }) {
@@ -43,16 +44,17 @@ export async function createCustomer(input: { label: string; planId: number; pla
   const [plan] = await db.select().from(plans).where(eq(plans.id, input.planId)).limit(1);
   const [cycle] = await db.select().from(planCycles).where(eq(planCycles.id, input.planCycleId)).limit(1);
   if (!plan || !cycle || cycle.planId !== plan.id || !plan.isActive || !cycle.isActive) throw new Error("Plano ou ciclo de pagamento inválido");
-  const accessToken = randomBytes(24).toString("base64url");
+  const accessToken = randomBytes(24).toString("base64url"); const xtreamUsername = randomDigits(10); const xtreamPassword = randomDigits(12);
   const now = Date.now();
   const trialEndsAt = plan.trialDays > 0 ? new Date(now + plan.trialDays * 86_400_000) : null;
   const expiresAt = new Date((trialEndsAt?.getTime() ?? now) + cycle.intervalDays * 86_400_000);
-  await db.insert(customers).values({ label: input.label, plan: plan.name, planId: plan.id, planCycleId: cycle.id, screenLimit: plan.screenLimit, usedScreens: 0, expiresAt, trialEndsAt, accessTokenHash: hashAccessToken(accessToken), status: "active" });
-  return { accessToken };
+  await db.insert(customers).values({ label: input.label, plan: plan.name, planId: plan.id, planCycleId: cycle.id, screenLimit: plan.screenLimit, usedScreens: 0, expiresAt, trialEndsAt, accessTokenHash: hashAccessToken(accessToken), xtreamUsername, xtreamPasswordHash: hashAccessToken(xtreamPassword), status: "active" });
+  return { accessToken, xtreamUsername, xtreamPassword };
 }
 export async function getCustomerById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(customers).where(eq(customers.id, id)).limit(1); return rows[0]; }
 export async function getCustomerByAccessToken(accessToken: string) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(customers).where(eq(customers.accessTokenHash, hashAccessToken(accessToken))).limit(1); return rows[0]; }
 export async function updateCustomerStatus(id: number, status: "active" | "attention" | "expired") { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(customers).set({ status }).where(eq(customers.id, id)); }
+export async function rotateXtreamPassword(id: number) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const password = randomDigits(12); await db.update(customers).set({ xtreamPasswordHash: hashAccessToken(password) }).where(eq(customers.id, id)); return { password }; }
 
 export async function listChannels() { const db = await getDb(); return db ? db.select().from(channels).orderBy(desc(channels.updatedAt)) : []; }
 export async function createChannel(input: { name: string; groupTitle: string; sources: Array<{ quality: string; primaryUrl: string; fallbackUrl?: string | null }> }) {

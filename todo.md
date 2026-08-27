@@ -32,3 +32,16 @@
 - [ ] Garantir que a API não armazene PIN nem bloqueie conteúdo, retornando apenas a sinalização etária para controle local do aplicativo.
 - [ ] Implementar o endpoint privado de reprodução usado pela M3U, com token, qualidade e fallback selecionados sem expor fontes de origem.
 - [ ] Expandir a API oficial para retornar programas EPG e episódios VOD com sua classificação etária.
+- [ ] Implementar compatibilidade Xtream V2 com credenciais próprias de cliente, sem usar o token de ativação do aplicativo.
+- [ ] Permitir que cada canal use um M3U8 mestre ou fontes M3U8 separadas por qualidade com fallback.
+- [ ] Aceitar ID TMDB opcional no cadastro de filmes, séries e novelas para preencher metadados e capas automaticamente.
+- [ ] Adicionar na edição do cliente um botão para gerar e exibir uma nova senha numérica aleatória do Xtream V2, invalidando a anterior.
+- [ ] Usar as mesmas credenciais numéricas Xtream V2 para autenticar o aplicativo oficial e obter a lista M3U, removendo a dependência do token de ativação nesses fluxos.
+- [ ] Adicionar edição administrativa das informações do cliente no painel.
+- [ ] Criar rota autenticada para o aplicativo oficial editar somente as informações permitidas do próprio perfil.
+- [ ] Persistir nome, e-mail e telefone no perfil de cliente e disponibilizar edição controlada no painel e no aplicativo oficial.
+- [ ] Criar gestão de dispositivos ativos por cliente, respeitando o limite de telas e permitindo remover dispositivos para liberar vagas.
+- [ ] Deixar os campos de fallback M3U8 ocultos inicialmente e exibi-los individualmente apenas ao solicitar fallback para a qualidade correspondente.
+- [ ] Detectar no servidor manifestos M3U8 mestre por EXT-X-STREAM-INF e dispensar fontes separadas quando houver múltiplas qualidades no mesmo link.
+- [ ] Permitir configurar Origin e Referer personalizados por canal, armazenados no servidor e usados apenas ao consultar a fonte M3U8.
+- [ ] Associar Origin e Referer individualmente à origem e ao fallback de cada qualidade, permitindo hosts distintos dentro do mesmo canal.

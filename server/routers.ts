@@ -8,6 +8,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import { createMercadoPagoPix, searchVodMetadata } from "./externalIntegrations";
+import { inspectM3uManifest } from "./m3uInspection";
 
 const customerStatus = z.enum(["active", "attention", "expired"]);
 const vodKind = z.enum(["filme", "serie", "novela"]);
@@ -30,7 +31,7 @@ export const appRouter = router({
     create: publicProcedure.input(z.object({ label: z.string().min(2).max(90), planId: z.number().int().positive(), planCycleId: z.number().int().positive() })).mutation(({ input }) => db.createCustomer(input)),
     setStatus: publicProcedure.input(z.object({ id: z.number().int().positive(), status: customerStatus })).mutation(({ input }) => db.updateCustomerStatus(input.id, input.status)),
   }),
-  channels: router({ list: publicProcedure.query(() => db.listChannels()), create: publicProcedure.input(z.object({ name: z.string().min(2).max(140), groupTitle: z.string().min(2).max(90), sources: z.array(z.object({ quality: z.enum(["SD", "HD", "FHD", "4K"]), primaryUrl: z.string().url(), fallbackUrl: z.string().url().nullable().optional() })).min(1).max(4) })).mutation(({ input }) => db.createChannel(input)), toggle: publicProcedure.input(z.object({ id: z.number().int().positive(), isActive: z.boolean() })).mutation(({ input }) => db.toggleChannel(input.id, input.isActive)) }),
+  channels: router({ list: publicProcedure.query(() => db.listChannels()), inspectManifest: adminProcedure.input(z.object({ sourceUrl: z.string().url() })).mutation(({ input }) => inspectM3uManifest(input.sourceUrl)), create: publicProcedure.input(z.object({ name: z.string().min(2).max(140), groupTitle: z.string().min(2).max(90), sources: z.array(z.object({ quality: z.enum(["SD", "HD", "FHD", "4K", "AUTO"]), primaryUrl: z.string().url(), fallbackUrl: z.string().url().nullable().optional() })).min(1).max(4) })).mutation(({ input }) => db.createChannel(input)), toggle: publicProcedure.input(z.object({ id: z.number().int().positive(), isActive: z.boolean() })).mutation(({ input }) => db.toggleChannel(input.id, input.isActive)) }),
   epg: router({ list: publicProcedure.query(() => db.listEpgSources()), create: publicProcedure.input(z.object({ name: z.string().min(2).max(140) })).mutation(({ input }) => db.createEpgSource(input.name)), markSync: publicProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ input }) => db.markEpgSync(input.id)) }),
   vod: router({
     list: publicProcedure.query(() => db.listVodItems()),
