@@ -73,6 +73,7 @@
 - [x] Validar o cabeçalho `x-signature` do webhook Mercado Pago com HMAC-SHA256, `data.id` e `x-request-id` antes de consultar ou atualizar cobranças.
 - [x] Cobrir o handler do webhook Mercado Pago para confirmar que eventos inválidos não consultam nem atualizam cobranças.
 - [ ] Executar as pendências priorizadas do backlog, preservando o histórico e marcando cada item somente após implementação e validação correspondente.
+- [x] Executar todas as pendências priorizadas verificáveis sem conexão externa, mantendo abertas as dependentes de Neon e produção.
 - [x] Criar e triar nomes inspirados no latim, relacionados a visão, luz, sinal ou movimento, antes de rebatizar o painel.
 - [x] Substituir a identidade Nexus Stream por Videlis em títulos, textos, metadados e configurações visíveis.
 - [x] Auditar os estados do backlog e reabrir itens marcados como concluídos sem implementação e validação verificáveis.
@@ -99,3 +100,4 @@
 - [x] Substituir o proxy Xtream que baixa mídia inteira em memória por uma estratégia de reprodução compatível com Vercel e validar live, filme, episódio e negação de credenciais.
 - [x] Cobrir o resolvedor interno de reprodução com autorização do gateway, tickets inválidos e resolução segura de canal, filme e episódio.
 - [x] Cobrir o Worker Cloudflare de mídia para manifesto HLS, transmissão binária e propagação de erros sem expor a origem.
+- [ ] Preparar e sincronizar a versão validada do projeto Videlis com o repositório GitHub informado pelo usuário, após confirmação explícita do envio.
