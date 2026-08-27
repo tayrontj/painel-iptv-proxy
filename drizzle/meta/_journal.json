@@ -1,103 +1,12 @@
 {
   "version": "7",
-  "dialect": "mysql",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "5",
-      "when": 1787782817729,
-      "tag": "0000_breezy_alice",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1787783074783,
-      "tag": "0001_violet_starbolt",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1787783325017,
-      "tag": "0002_greedy_paper_doll",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1787783786293,
-      "tag": "0003_nostalgic_black_bolt",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1787784072370,
-      "tag": "0004_puzzling_darwin",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1787784413511,
-      "tag": "0005_acoustic_hydra",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1787784621923,
-      "tag": "0006_faithful_rockslide",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "5",
-      "when": 1787790772240,
-      "tag": "0007_jazzy_felicia_hardy",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "5",
-      "when": 1787791379941,
-      "tag": "0008_high_dracula",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "5",
-      "when": 1787791637330,
-      "tag": "0009_fuzzy_shape",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "5",
-      "when": 1787792070531,
-      "tag": "0010_romantic_mentor",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "5",
-      "when": 1787792514362,
-      "tag": "0011_huge_hobgoblin",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "5",
-      "when": 1787794204202,
-      "tag": "0012_fluffy_lord_tyger",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "5",
-      "when": 1787794615907,
-      "tag": "0013_noisy_iron_fist",
+      "version": "7",
+      "when": 1787796454528,
+      "tag": "0000_brown_domino",
       "breakpoints": true
     }
   ]

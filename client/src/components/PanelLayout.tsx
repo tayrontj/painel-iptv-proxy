@@ -14,15 +14,25 @@ import {
   LayoutDashboard,
   ListVideo,
   RadioTower,
+  LogIn,
   Settings2,
   UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
+import AdminLoginPage from "@/pages/AdminLoginPage";
 
 type PanelLayoutProps = {
   children: React.ReactNode;
 };
+
+export function AdminAccessGate({ children }: PanelLayoutProps) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="grid min-h-screen place-items-center bg-[#091013] p-6 text-slate-100"><div className="surface-card w-full max-w-md p-7 text-center"><span className="signal-dot" /><p className="mt-5 font-mono text-[10px] uppercase tracking-[0.18em] text-[#9df6df]">Nexus Stream</p><h1 className="mt-2 text-xl font-extrabold">Validando sessão administrativa</h1><p className="mt-3 text-sm leading-6 text-slate-400">Aguardando confirmação de identidade e permissões.</p></div></div>;
+  if (user?.role !== "admin") return <AdminLoginPage />;
+  return <>{children}</>;
+}
 
 const navigation: { label: string; path?: string; icon: LucideIcon }[] = [
   { label: "Visão geral", path: "/", icon: LayoutDashboard },
@@ -49,14 +59,14 @@ export default function PanelLayout({ children }: PanelLayoutProps) {
     <div className="panel-shell flex min-h-screen bg-[#091013] text-slate-100">
       <aside className="side-rail relative hidden min-h-screen w-[262px] shrink-0 overflow-hidden border-r border-white/[0.07] bg-[#0b1418] px-4 py-5 lg:flex lg:flex-col">
         <img
-          src="/manus-storage/nexus-routes-portrait_4f436c3b.jpg"
+          src="/storage/nexus-routes-portrait_4f436c3b.jpg"
           alt=""
           className="pointer-events-none absolute inset-x-0 bottom-0 h-[330px] w-full object-cover opacity-[0.14] mix-blend-screen"
         />
         <div className="relative flex items-center gap-3 px-2">
           <div className="grid h-10 w-10 place-items-center rounded-xl border border-[#43E6C2]/25 bg-[#43E6C2]/10 shadow-[0_0_22px_rgba(67,230,194,0.08)]">
             <img
-              src="/manus-storage/nexus-frequency-mark_5dbca578.png"
+              src="/storage/nexus-frequency-mark_5dbca578.png"
               alt="Nexus Stream"
               className="h-7 w-7 object-contain"
             />
@@ -124,7 +134,7 @@ export default function PanelLayout({ children }: PanelLayoutProps) {
         <div className="flex min-h-[66px] items-center justify-between border-b border-white/[0.07] bg-[#091013]/90 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
           <div className="flex items-center gap-3 lg:hidden">
             <div className="grid h-8 w-8 place-items-center rounded-lg border border-[#43E6C2]/20 bg-[#43E6C2]/10">
-              <img src="/manus-storage/nexus-frequency-mark_5dbca578.png" alt="Nexus Stream" className="h-5 w-5" />
+              <img src="/storage/nexus-frequency-mark_5dbca578.png" alt="Nexus Stream" className="h-5 w-5" />
             </div>
             <span className="text-sm font-semibold">Nexus Stream</span>
           </div>

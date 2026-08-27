@@ -15,20 +15,25 @@ import PlansPage from "./pages/PlansPage";
 import VodEpisodesPage from "./pages/VodEpisodesPage";
 import M3uPage from "./pages/M3uPage";
 import VodPage from "./pages/VodPage";
+import { AdminAccessGate } from "./components/PanelLayout";
+
+function AdminRoute({ path, component: Component }: { path: string; component: React.ComponentType }) {
+  return <Route path={path} component={() => <AdminAccessGate><Component /></AdminAccessGate>} />;
+}
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/clientes" component={CustomersPage} />
-      <Route path="/planos" component={PlansPage} />
-      <Route path="/canais" component={ChannelsPage} />
-      <Route path="/vod" component={VodPage} />
-      <Route path="/vod/:id/episodios" component={VodEpisodesPage} />
-      <Route path="/listas-m3u" component={M3uPage} />
-      <Route path="/epg" component={EpgPage} />
-      <Route path="/assinaturas" component={SubscriptionsPage} />
-      <Route path="/integracoes" component={IntegrationsPage} />
+      <AdminRoute path="/" component={Home} />
+      <AdminRoute path="/clientes" component={CustomersPage} />
+      <AdminRoute path="/planos" component={PlansPage} />
+      <AdminRoute path="/canais" component={ChannelsPage} />
+      <AdminRoute path="/vod" component={VodPage} />
+      <AdminRoute path="/vod/:id/episodios" component={VodEpisodesPage} />
+      <AdminRoute path="/listas-m3u" component={M3uPage} />
+      <AdminRoute path="/epg" component={EpgPage} />
+      <AdminRoute path="/assinaturas" component={SubscriptionsPage} />
+      <AdminRoute path="/integracoes" component={IntegrationsPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -81,7 +81,7 @@ export default function Home() {
     <PanelLayout>
       <section className="relative overflow-hidden rounded-[26px] border border-white/[0.08] bg-[#0e1a1e] px-6 py-7 shadow-[0_24px_60px_rgba(0,0,0,0.22)] sm:px-8 sm:py-8">
         <img
-          src="/manus-storage/nexus-streamfield-wide_7bf781f7.jpg"
+          src="/storage/nexus-streamfield-wide_7bf781f7.jpg"
           alt=""
           className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40 mix-blend-screen"
         />
@@ -160,7 +160,7 @@ export default function Home() {
         </article>
 
         <article className="surface-card relative overflow-hidden">
-          <img src="/manus-storage/nexus-network-topology_a6590bd9.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.12]" />
+          <img src="/storage/nexus-network-topology_a6590bd9.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.12]" />
           <div className="relative border-b border-white/[0.07] px-5 py-5 sm:px-6">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-slate-500">Registro operacional</p>
             <h2 className="mt-1 text-lg font-bold tracking-tight text-white">Últimos sinais</h2>

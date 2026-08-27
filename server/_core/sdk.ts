@@ -289,6 +289,12 @@ class SDKServer {
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
+    if (sessionUserId.startsWith("admin:")) {
+      if (!user || user.role !== "admin") throw ForbiddenError("Administrator not found");
+      await db.upsertUser({ openId: user.openId, lastSignedIn: signedInAt, role: "admin" });
+      return user;
+    }
+
     // If user not in DB, sync from OAuth server automatically
     if (!user) {
       try {

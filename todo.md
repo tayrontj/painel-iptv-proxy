@@ -14,15 +14,15 @@
 - [x] Preparar contratos de API para o aplicativo exibir QR Code PIX e alertas de assinatura próxima do vencimento ou vencida.
 - [x] Revisar a interface final para confirmar que não há papéis, fluxos ou termos de revenda.
 - [x] Adicionar suporte persistente de capa ao VOD e salvar a capa escolhida a partir da busca de metadados.
-- [x] Implementar atualização de status PIX por notificação do Mercado Pago e exibir o histórico de cobranças no painel.
-- [x] Criar procedimentos específicos para o aplicativo consumir o estado de assinatura, alertas e QR Code PIX.
+- [ ] Implementar atualização de status PIX por notificação do Mercado Pago e exibir o histórico de cobranças no painel.
+- [ ] Criar procedimentos específicos para o aplicativo consumir o estado de assinatura, alertas e QR Code PIX.
 - [x] Substituir todos os prompts, alertas e confirmações nativos do navegador por caixas modais próprias do painel.
 - [x] Criar temporadas, episódios e capítulos vinculados ao título VOD, com inclusão incremental para séries semanais e novelas diárias.
 - [x] Criar uma tela de detalhes do VOD para cadastrar e publicar episódios/capítulos sem recriar a série ou novela.
 - [x] Criar cadastro de planos com preço, ciclo de pagamento, quantidade de telas e período de teste.
 - [x] Vincular clientes aos planos para aplicar automaticamente vencimento, período de teste e limite de telas.
 - [x] Modelar múltiplos ciclos e descontos percentuais dentro de um único plano, permitindo escolha do ciclo no cadastro do cliente.
-- [x] Criar rotas do aplicativo para listar opções, simular valores e solicitar upgrade ou downgrade de plano com ciclo escolhido.
+- [ ] Criar rotas do aplicativo para listar opções, simular valores e solicitar upgrade ou downgrade de plano com ciclo escolhido.
 - [ ] Exibir no painel de Assinaturas PIX o histórico persistente de cobranças por cliente e os status atualizados pelo webhook.
 - [x] Reorganizar o formulário de criação de planos para caber no viewport, com agrupamento e rolagem interna responsiva.
 - [x] Adicionar no cadastro de canais URLs M3U8 de origem e fallback por qualidade, mantendo-as somente no servidor.
@@ -49,6 +49,19 @@
 - [ ] Incluir número do canal e classificação etária no cadastro e na resposta da API oficial.
 - [ ] Exigir autenticação e papel administrativo em todas as rotas e consultas do painel, sem dados administrativos incorporados no cliente.
 - [ ] Revisar a superfície de dados para que inspeção do navegador e overrides locais não concedam acesso nem revelem segredos ou conteúdos administrativos protegidos.
+- [ ] Aplicar guard administrativo real em todas as rotas do painel, incluindo Listas M3U, e impedir renderização e consultas sem sessão admin.
+- [ ] Cobrir com testes a autorização das áreas administrativas EPG, VOD, PIX e integrações, além das listagens já verificadas.
+- [ ] Auditar a superfície pública do aplicativo para assegurar que não há estado, segredos ou dados administrativos incorporados sem autorização server-side.
+- [x] Substituir a tela explicativa de acesso restrito por uma página de login administrativo direta.
+- [ ] Substituir o login OAuth visível por uma página própria do Nexus Stream com usuário e senha administrativos configurados de forma segura no servidor.
+- [ ] Adaptar a arquitetura para Vercel Hobby, consolidando funções e evitando multiplicação desnecessária de endpoints e tarefas agendadas.
+- [ ] Migrar o banco de produção para PostgreSQL Neon e preparar um seeder idempotente de administrador e dados demonstrativos.
+- [ ] Preparar a entrega para Vercel Hobby com uma função Node consolidada e sem cron nativo a cada cinco minutos.
+- [ ] Criar um contrato autenticado para Cloudflare Worker disparar monitoramento de canais e decisão de sincronização EPG sem cron frequente na Vercel.
+- [ ] Documentar as variáveis de Neon, administrador local e agendador externo sem inserir valores ou abrir conexões nesta etapa.
+- [x] Renomear a rota pública de ativos de `/manus-storage` para `/storage` em todo o Nexus Stream.
+- [ ] Pesquisar e propor um novo nome distintivo para o painel IPTV, com triagem de uso aparente no setor antes de rebatizar a interface.
+- [x] Auditar os estados do backlog e reabrir itens marcados como concluídos sem implementação e validação verificáveis.
 - [ ] Criar um monitor periódico de canais que teste origem e fallback, registre estado e última verificação.
 - [ ] Exibir no dashboard e na lista de canais o estado operacional, falhas e uso de fallback de cada canal.
 - [ ] Testar cada link M3U8 individualmente, selecionar fallback saudável e excluir canais sem rota disponível da M3U e da API JSON.
