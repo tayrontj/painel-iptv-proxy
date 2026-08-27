@@ -3,7 +3,6 @@ import { ForbiddenError } from "@shared/_core/errors";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
-import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
@@ -17,6 +16,10 @@ import type {
 // Utility function
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
+
+// `jose` é ESM. A importação dinâmica preserva sua compatibilidade quando o
+// Express é empacotado como CommonJS para a única Function da Vercel.
+const loadJose = () => import("jose");
 
 export type SessionPayload = {
   openId: string;
@@ -186,6 +189,7 @@ class SDKServer {
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
     const secretKey = this.getSessionSecret();
 
+    const { SignJWT } = await loadJose();
     return new SignJWT({
       openId: payload.openId,
       appId: payload.appId,
@@ -206,6 +210,7 @@ class SDKServer {
 
     try {
       const secretKey = this.getSessionSecret();
+      const { jwtVerify } = await loadJose();
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });

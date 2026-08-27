@@ -15,6 +15,7 @@ describe("contrato de implantação Vite + Function", () => {
 
     expect(packageJson.scripts.build).toContain("server/vercelFunctionApp.ts");
     expect(packageJson.scripts.build).toContain("dist/videlis-api.cjs");
+    expect(packageJson.scripts.build).toContain("--supported:dynamic-import=true");
     expect(vercelConfig.functions["api/index.ts"].includeFiles).toBe("dist/videlis-api.cjs");
     expect(vercelConfig.rewrites[0]).toEqual({
       source: "/api/:videlis_api_path*",
