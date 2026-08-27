@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { createApp } from "../server/app.ts";
-import { restoreVercelApiPath } from "../server/vercelApiRoute.ts";
+import { createApp } from "../server/app";
+import { restoreVercelApiPath } from "../server/vercelApiRoute";
 
 const app = createApp();
 

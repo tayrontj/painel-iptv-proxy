@@ -110,4 +110,5 @@
 - [x] Auditar as variáveis de ambiente necessárias para ativar a produção Vercel com Neon conectado, sem expor valores sensíveis.
 - [ ] Diagnosticar e corrigir a autenticação administrativa após a conexão Neon e o redeploy na Vercel.
 - [ ] Corrigir a implantação Vercel que responde 404 para `/api/trpc` e impede o login administrativo.
+- [ ] Corrigir o empacotamento da função Vercel que não localiza `server/app` e retorna erro 500 em `/api/trpc`.
 - [x] Configurar na Vercel os segredos restantes de reprodução autorizados, sem alterar Mercado Pago ou atualização Android.
