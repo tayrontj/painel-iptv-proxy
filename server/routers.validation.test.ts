@@ -29,4 +29,9 @@ describe("contratos administrativos", () => {
     const caller = appRouter.createCaller(createContext());
     await expect(caller.vod.create({ title: "Conteúdo", kind: "filme", sourceUrl: "origem sem protocolo" })).rejects.toBeDefined();
   });
+
+  it("rejeita ID TMDB não positivo antes de persistir o VOD", async () => {
+    const caller = appRouter.createCaller(createContext());
+    await expect(caller.vod.create({ title: "Conteúdo", kind: "filme", tmdbId: 0 })).rejects.toBeDefined();
+  });
 });

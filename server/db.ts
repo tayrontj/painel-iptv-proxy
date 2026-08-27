@@ -1,10 +1,10 @@
 /** Acesso de dados PostgreSQL do Nexus Stream, compatível com Neon. */
 import { createHash, randomBytes, randomInt } from "node:crypto";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import * as schema from "../drizzle/schema";
-import { channelSources, channels, customers, epgSources, integrationSettings, type InsertUser, planCycles, plans, pixCharges, users, vodEpisodes, vodItems, vodSeasons } from "../drizzle/schema";
+import { channelSources, channels, customerDevices, customers, epgSources, integrationSettings, type InsertUser, planCycles, plans, pixCharges, users, vodEpisodes, vodItems, vodSeasons } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { encryptIntegrationSecret } from "./integrationSecrets";
 import { adminOpenId, verifyAdminPassword } from "./adminCredentials";
@@ -39,6 +39,18 @@ export async function authenticateAdmin(username: string, password: string) {
 }
 function hashAccessToken(value: string) { return createHash("sha256").update(value).digest("hex"); }
 function randomDigits(length = 10) { return Array.from({ length }, () => randomInt(0, 10)).join(""); }
+export function findAvailableDeviceSlot(screenLimit: number, occupiedSlots: readonly number[]) { const occupied = new Set(occupiedSlots); return Array.from({ length: screenLimit }, (_, index) => index + 1).find(candidate => !occupied.has(candidate)); }
+
+async function createUniqueXtreamCredentials(db: NonNullable<Awaited<ReturnType<typeof getDb>>>) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const username = randomDigits(10);
+    const password = randomDigits(12);
+    const passwordHash = hashAccessToken(password);
+    const existing = await db.select({ id: customers.id }).from(customers).where(or(eq(customers.xtreamUsername, username), eq(customers.xtreamPasswordHash, passwordHash))).limit(1);
+    if (!existing[0]) return { username, password, passwordHash };
+  }
+  throw new Error("Não foi possível reservar credenciais Xtream exclusivas. Tente novamente.");
+}
 
 export async function listCustomers() { const db = await getDb(); return db ? db.select().from(customers).orderBy(desc(customers.updatedAt)) : []; }
 export async function createCustomer(input: { label: string; email?: string | null; phone?: string | null; planId: number; planCycleId: number }) {
@@ -46,15 +58,29 @@ export async function createCustomer(input: { label: string; email?: string | nu
   const [plan] = await db.select().from(plans).where(eq(plans.id, input.planId)).limit(1);
   const [cycle] = await db.select().from(planCycles).where(eq(planCycles.id, input.planCycleId)).limit(1);
   if (!plan || !cycle || cycle.planId !== plan.id || !plan.isActive || !cycle.isActive) throw new Error("Plano ou ciclo de pagamento inválido");
-  const accessToken = randomBytes(24).toString("base64url"), xtreamUsername = randomDigits(10), xtreamPassword = randomDigits(12), now = Date.now();
+  const accessToken = randomBytes(24).toString("base64url"), xtream = await createUniqueXtreamCredentials(db), now = Date.now();
   const trialEndsAt = plan.trialDays > 0 ? new Date(now + plan.trialDays * 86_400_000) : null, expiresAt = new Date((trialEndsAt?.getTime() ?? now) + cycle.intervalDays * 86_400_000);
-  await db.insert(customers).values({ label: input.label, email: input.email || null, phone: input.phone || null, plan: plan.name, planId: plan.id, planCycleId: cycle.id, screenLimit: plan.screenLimit, usedScreens: 0, expiresAt, trialEndsAt, accessTokenHash: hashAccessToken(accessToken), xtreamUsername, xtreamPasswordHash: hashAccessToken(xtreamPassword), status: "active" });
-  return { accessToken, xtreamUsername, xtreamPassword };
+  await db.insert(customers).values({ label: input.label, email: input.email || null, phone: input.phone || null, plan: plan.name, planId: plan.id, planCycleId: cycle.id, screenLimit: plan.screenLimit, usedScreens: 0, expiresAt, trialEndsAt, accessTokenHash: hashAccessToken(accessToken), xtreamUsername: xtream.username, xtreamPasswordHash: xtream.passwordHash, status: "active" });
+  return { accessToken, xtreamUsername: xtream.username, xtreamPassword: xtream.password };
 }
 export async function getCustomerById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(customers).where(eq(customers.id, id)).limit(1); return rows[0]; }
 export async function getCustomerByAccessToken(accessToken: string) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(customers).where(eq(customers.accessTokenHash, hashAccessToken(accessToken))).limit(1); return rows[0]; }
+export async function getCustomerByXtreamCredentials(username: string, password: string) { const db = await getDb(); if (!db || !/^\d{6,16}$/.test(username) || !/^\d{6,32}$/.test(password)) return undefined; const rows = await db.select().from(customers).where(eq(customers.xtreamUsername, username)).limit(1); const customer = rows[0]; return customer?.xtreamPasswordHash === hashAccessToken(password) ? customer : undefined; }
 export async function updateCustomerStatus(id: number, status: "active" | "attention" | "expired") { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(customers).set({ status }).where(eq(customers.id, id)); }
-export async function rotateXtreamPassword(id: number) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const password = randomDigits(12); await db.update(customers).set({ xtreamPasswordHash: hashAccessToken(password) }).where(eq(customers.id, id)); return { password }; }
+export async function updateCustomerProfile(input: { id: number; label: string; email?: string | null; phone?: string | null }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(customers).set({ label: input.label, email: input.email || null, phone: input.phone || null }).where(eq(customers.id, input.id)); }
+export async function rotateXtreamPassword(id: number) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); for (let attempt = 0; attempt < 20; attempt += 1) { const password = randomDigits(12); const passwordHash = hashAccessToken(password); const existing = await db.select({ id: customers.id }).from(customers).where(eq(customers.xtreamPasswordHash, passwordHash)).limit(1); if (!existing[0]) { await db.update(customers).set({ xtreamPasswordHash: passwordHash }).where(eq(customers.id, id)); return { password }; } } throw new Error("Não foi possível gerar uma senha Xtream exclusiva. Tente novamente."); }
+export async function listCustomerDevices(customerId: number) { const db = await getDb(); return db ? db.select({ id: customerDevices.id, slot: customerDevices.slot, deviceName: customerDevices.deviceName, lastSeenAt: customerDevices.lastSeenAt, createdAt: customerDevices.createdAt }).from(customerDevices).where(eq(customerDevices.customerId, customerId)).orderBy(customerDevices.slot) : []; }
+async function syncUsedScreens(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, customerId: number) { await db.execute(sql`UPDATE customers SET used_screens = (SELECT COUNT(*)::int FROM customer_devices WHERE customer_id = ${customerId}), updated_at = NOW() WHERE id = ${customerId}`); }
+export async function registerCustomerDevice(input: { customerId: number; deviceName: string; deviceKey: string }, retry = false) {
+  const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const deviceKeyHash = hashAccessToken(input.deviceKey);
+  const customerRows = await db.select({ screenLimit: customers.screenLimit }).from(customers).where(eq(customers.id, input.customerId)).limit(1); const customer = customerRows[0]; if (!customer) throw new Error("Cliente não encontrado");
+  const existing = await db.select({ id: customerDevices.id, slot: customerDevices.slot, deviceName: customerDevices.deviceName, lastSeenAt: customerDevices.lastSeenAt, createdAt: customerDevices.createdAt }).from(customerDevices).where(and(eq(customerDevices.customerId, input.customerId), eq(customerDevices.deviceKeyHash, deviceKeyHash))).limit(1);
+  if (existing[0]) { await db.update(customerDevices).set({ deviceName: input.deviceName, lastSeenAt: new Date() }).where(eq(customerDevices.id, existing[0].id)); await syncUsedScreens(db, input.customerId); return { ...existing[0], deviceName: input.deviceName, lastSeenAt: new Date() }; }
+  const devices = await listCustomerDevices(input.customerId); const slot = findAvailableDeviceSlot(customer.screenLimit, devices.map(device => device.slot));
+  if (!slot) throw new Error("Limite de telas simultâneas atingido. Remova um dispositivo antes de continuar.");
+  try { const [created] = await db.insert(customerDevices).values({ customerId: input.customerId, slot, deviceName: input.deviceName, deviceKeyHash, lastSeenAt: new Date() }).returning({ id: customerDevices.id, slot: customerDevices.slot, deviceName: customerDevices.deviceName, lastSeenAt: customerDevices.lastSeenAt, createdAt: customerDevices.createdAt }); if (!created) throw new Error("Não foi possível registrar o dispositivo"); await syncUsedScreens(db, input.customerId); return created; } catch (error) { if (!retry) return registerCustomerDevice(input, true); throw error; }
+}
+export async function removeCustomerDevice(input: { customerId: number; deviceId: number }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const removed = await db.delete(customerDevices).where(and(eq(customerDevices.id, input.deviceId), eq(customerDevices.customerId, input.customerId))).returning({ id: customerDevices.id }); if (!removed[0]) throw new Error("Dispositivo não encontrado para este cliente"); await syncUsedScreens(db, input.customerId); }
 
 export async function listChannels() { const db = await getDb(); return db ? db.select().from(channels).orderBy(desc(channels.updatedAt)) : []; }
 export async function createChannel(input: { name: string; groupTitle: string; channelNumber: number; epgId?: string | null; logoUrl?: string | null; ageRating: number; sources: Array<{ quality: string; primaryUrl: string; primaryOrigin?: string | null; primaryReferer?: string | null; fallbackUrl?: string | null; fallbackOrigin?: string | null; fallbackReferer?: string | null }> }) {
@@ -75,7 +101,9 @@ export async function saveEpgSyncSuccess(input: { id: number; programmeCount: nu
 export async function saveEpgSyncFailure(id: number, message: string) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(epgSources).set({ status: "attention", lastAttemptAt: new Date(), lastError: message.slice(0, 2000) }).where(eq(epgSources.id, id)); }
 
 export async function listVodItems() { const db = await getDb(); return db ? db.select().from(vodItems).orderBy(desc(vodItems.updatedAt)) : []; }
-export async function createVodItem(input: { title: string; kind: "filme" | "serie" | "novela"; releaseYear?: number | null; sourceUrl?: string | null; synopsis?: string | null; posterUrl?: string | null; ageRating?: number }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.insert(vodItems).values({ ...input, status: input.sourceUrl ? "ready" : "draft" }); }
+export async function getVodItemById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(vodItems).where(eq(vodItems.id, id)).limit(1); return rows[0]; }
+export async function getVodEpisodeById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(vodEpisodes).where(eq(vodEpisodes.id, id)).limit(1); return rows[0]; }
+export async function createVodItem(input: { title: string; kind: "filme" | "serie" | "novela"; tmdbId?: number | null; releaseYear?: number | null; sourceUrl?: string | null; synopsis?: string | null; posterUrl?: string | null; ageRating?: number }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.insert(vodItems).values({ ...input, status: input.sourceUrl ? "ready" : "draft" }); }
 
 export async function listIntegrationSettings() { const db = await getDb(); if (!db) return []; const rows = await db.select().from(integrationSettings).orderBy(desc(integrationSettings.updatedAt)); return rows.map(({ secretCiphertext: _secretCiphertext, secretIv: _secretIv, secretTag: _secretTag, ...safe }) => safe); }
 export async function getPrivateIntegrationSetting(provider: "mercado_pago" | "vod_metadata") { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(integrationSettings).where(eq(integrationSettings.provider, provider)).limit(1); return rows[0]; }
@@ -86,9 +114,21 @@ export async function saveIntegrationSetting(input: { provider: string; label: s
   await db.insert(integrationSettings).values(values).onConflictDoUpdate({ target: integrationSettings.provider, set: { label: values.label, baseUrl: values.baseUrl, enabled: values.enabled, ...(encrypted ? { secretCiphertext: encrypted.ciphertext, secretIv: encrypted.iv, secretTag: encrypted.tag, secretHint: encrypted.hint } : {}) } });
 }
 
-export async function createPixCharge(input: { customerId: number; amountCents: number; providerPaymentId: string; externalReference: string; qrCode: string | null; qrCodeBase64: string | null; dueAt: Date }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.insert(pixCharges).values({ ...input, status: "pending" }); }
+export async function createPixCharge(input: { customerId: number; amountCents: number; providerPaymentId: string; externalReference: string; requestedPlanId?: number | null; requestedPlanCycleId?: number | null; qrCode: string | null; qrCodeBase64: string | null; dueAt: Date }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.insert(pixCharges).values({ ...input, status: "pending" }); }
 export async function listPixChargesForCustomer(customerId: number) { const db = await getDb(); return db ? db.select().from(pixCharges).where(eq(pixCharges.customerId, customerId)).orderBy(desc(pixCharges.createdAt)) : []; }
 export async function updatePixChargeStatusByProviderId(providerPaymentId: string, status: "pending" | "approved" | "expired" | "cancelled") { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); await db.update(pixCharges).set({ status }).where(eq(pixCharges.providerPaymentId, providerPaymentId)); }
+/** Atualiza a cobrança e reivindica uma alteração de plano somente uma vez quando o PIX é aprovado. */
+export async function settlePixCharge(providerPaymentId: string, status: "pending" | "approved" | "expired" | "cancelled") {
+  const db = await getDb(); if (!db) throw new Error("Banco indisponível");
+  if (status !== "approved") { await db.update(pixCharges).set({ status }).where(eq(pixCharges.providerPaymentId, providerPaymentId)); return { appliedPlanChange: false }; }
+  const [charge] = await db.select().from(pixCharges).where(eq(pixCharges.providerPaymentId, providerPaymentId)).limit(1);
+  if (!charge) return { appliedPlanChange: false };
+  if (!charge.requestedPlanId || !charge.requestedPlanCycleId) { await db.update(pixCharges).set({ status: "approved" }).where(eq(pixCharges.providerPaymentId, providerPaymentId)); return { appliedPlanChange: false }; }
+  const claimed = await db.update(pixCharges).set({ status: "approved", requestedPlanId: null, requestedPlanCycleId: null }).where(and(eq(pixCharges.providerPaymentId, providerPaymentId), eq(pixCharges.status, "pending"))).returning({ id: pixCharges.id });
+  if (!claimed[0]) return { appliedPlanChange: false };
+  await applyCustomerPlanChange({ customerId: charge.customerId, planId: charge.requestedPlanId, planCycleId: charge.requestedPlanCycleId });
+  return { appliedPlanChange: true };
+}
 
 export async function listPlans() { const db = await getDb(); if (!db) return []; const base = await db.select().from(plans).orderBy(desc(plans.updatedAt)); const cycles = await db.select().from(planCycles).orderBy(planCycles.intervalDays); return base.map(plan => ({ ...plan, cycles: cycles.filter(cycle => cycle.planId === plan.id) })); }
 export async function createPlan(input: { name: string; monthlyPriceCents: number; screenLimit: number; trialDays: number; cycles: Array<{ cycle: "monthly" | "quarterly" | "semiannual" | "annual" | "custom"; intervalDays: number; discountPercent: number }> }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const [inserted] = await db.insert(plans).values({ name: input.name, monthlyPriceCents: input.monthlyPriceCents, screenLimit: input.screenLimit, trialDays: input.trialDays, isActive: true }).returning({ id: plans.id }); if (!inserted) throw new Error("Não foi possível criar o plano"); await db.insert(planCycles).values(input.cycles.map(cycle => ({ ...cycle, planId: inserted.id, isActive: true }))); return inserted; }

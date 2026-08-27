@@ -26,3 +26,22 @@ export type AppPixCharge = {
   qrCodeBase64: string | null;
   expiresAt: number;
 };
+
+/** Perfil editável pelo próprio assinante, sem credenciais ou dados administrativos. */
+export type AppCustomerProfile = {
+  label: string;
+  email: string | null;
+  phone: string | null;
+  plan: string;
+  screenLimit: number;
+  usedScreens: number;
+};
+
+/** Dispositivo associado à conta do aplicativo, identificado apenas por dados seguros de apresentação. */
+export type AppCustomerDevice = {
+  id: number;
+  slot: number;
+  deviceName: string;
+  lastSeenAt: Date;
+  createdAt: Date;
+};

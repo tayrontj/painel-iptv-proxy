@@ -16,6 +16,12 @@ describe("autorização administrativa", () => {
     await expect(appRouter.createCaller(userContext("user")).customers.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
+  it("nega a consulta e remoção de telas sem papel administrativo", async () => {
+    const caller = appRouter.createCaller(userContext("user"));
+    await expect(caller.customers.listDevices({ customerId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.customers.removeDevice({ customerId: 1, deviceId: 2 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("nega a listagem de canais para conta autenticada sem papel admin", async () => {
     await expect(appRouter.createCaller(userContext("user")).channels.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });

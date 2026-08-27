@@ -19,13 +19,11 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
-import { Button } from "./ui/button";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Page 1", path: "/" },
@@ -42,6 +40,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [, navigate] = useLocation();
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
@@ -68,13 +67,13 @@ export default function DashboardLayout({
               Access to this dashboard requires authentication. Continue to launch the login flow.
             </p>
           </div>
-          <Button
-            onClick={() => startLogin()}
-            size="lg"
+          <button
+            type="button"
+            onClick={() => navigate("/")}
             className="w-full shadow-lg hover:shadow-xl transition-all"
           >
-            Sign in
-          </Button>
+            Open administrator login
+          </button>
         </div>
       </div>
     );

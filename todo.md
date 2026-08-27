@@ -14,7 +14,7 @@
 - [x] Preparar contratos de API para o aplicativo exibir QR Code PIX e alertas de assinatura próxima do vencimento ou vencida.
 - [x] Revisar a interface final para confirmar que não há papéis, fluxos ou termos de revenda.
 - [x] Adicionar suporte persistente de capa ao VOD e salvar a capa escolhida a partir da busca de metadados.
-- [ ] Implementar atualização de status PIX por notificação do Mercado Pago e exibir o histórico de cobranças no painel.
+- [x] Implementar atualização de status PIX por notificação do Mercado Pago e exibir o histórico de cobranças no painel.
 - [ ] Criar procedimentos específicos para o aplicativo consumir o estado de assinatura, alertas e QR Code PIX.
 - [x] Substituir todos os prompts, alertas e confirmações nativos do navegador por caixas modais próprias do painel.
 - [x] Criar temporadas, episódios e capítulos vinculados ao título VOD, com inclusão incremental para séries semanais e novelas diárias.
@@ -22,24 +22,30 @@
 - [x] Criar cadastro de planos com preço, ciclo de pagamento, quantidade de telas e período de teste.
 - [x] Vincular clientes aos planos para aplicar automaticamente vencimento, período de teste e limite de telas.
 - [x] Modelar múltiplos ciclos e descontos percentuais dentro de um único plano, permitindo escolha do ciclo no cadastro do cliente.
-- [ ] Criar rotas do aplicativo para listar opções, simular valores e solicitar upgrade ou downgrade de plano com ciclo escolhido.
-- [ ] Exibir no painel de Assinaturas PIX o histórico persistente de cobranças por cliente e os status atualizados pelo webhook.
+- [x] Criar rotas do aplicativo para listar opções, simular valores e solicitar upgrade ou downgrade de plano com ciclo escolhido.
+- [x] Exibir no painel de Assinaturas PIX o histórico persistente de cobranças por cliente e os status atualizados pelo webhook.
+- [x] Integrar o histórico persistente de cobranças diretamente à tela de Assinaturas PIX, com estados de carregamento, erro e vazio por cliente.
 - [x] Reorganizar o formulário de criação de planos para caber no viewport, com agrupamento e rolagem interna responsiva.
 - [x] Adicionar no cadastro de canais URLs M3U8 de origem e fallback por qualidade, mantendo-as somente no servidor.
-- [ ] Gerar listas M3U compatíveis para clientes externos, sem reutilizar a API oficial do aplicativo.
+- [x] Gerar listas M3U compatíveis para clientes externos, sem reutilizar a API oficial do aplicativo.
 - [ ] Criar API oficial do aplicativo com catálogo, assinaturas, canais e sinalização explícita de conteúdo 18+ para bloqueio local.
 - [ ] Aplicar a trava 18+ também a programas EPG, filmes, séries, novelas e episódios na API oficial.
 - [ ] Garantir que a API não armazene PIN nem bloqueie conteúdo, retornando apenas a sinalização etária para controle local do aplicativo.
-- [ ] Implementar o endpoint privado de reprodução usado pela M3U, com token, qualidade e fallback selecionados sem expor fontes de origem.
+- [x] Implementar o endpoint privado de reprodução usado pela M3U, com credenciais Xtream, qualidade e fallback selecionados sem expor fontes de origem.
 - [ ] Expandir a API oficial para retornar programas EPG e episódios VOD com sua classificação etária.
 - [ ] Implementar compatibilidade Xtream V2 com credenciais próprias de cliente, sem usar o token de ativação do aplicativo.
+- [x] Cobrir por testes a exportação M3U e o handshake Xtream V2 autenticados por usuário e senha numéricos.
+- [x] Migrar as rotas públicas do aplicativo para autenticação por usuário e senha Xtream, mantendo a API oficial separada da superfície externa.
+- [x] Cobrir por teste a autenticação da API oficial por usuário e senha Xtream, sem token de ativação legado.
+- [x] Ampliar e validar o contrato Xtream V2 para live e VOD conforme o contrato externo escolhido.
+- [x] Cobrir reprodução Xtream e casos de negação de credenciais inválidas nas rotas HTTP montadas.
 - [ ] Permitir que cada canal use um M3U8 mestre ou fontes M3U8 separadas por qualidade com fallback.
-- [ ] Aceitar ID TMDB opcional no cadastro de filmes, séries e novelas para preencher metadados e capas automaticamente.
-- [ ] Adicionar na edição do cliente um botão para gerar e exibir uma nova senha numérica aleatória do Xtream V2, invalidando a anterior.
-- [ ] Usar as mesmas credenciais numéricas Xtream V2 para autenticar o aplicativo oficial e obter a lista M3U, removendo a dependência do token de ativação nesses fluxos.
-- [ ] Adicionar edição administrativa das informações do cliente no painel.
-- [ ] Criar rota autenticada para o aplicativo oficial editar somente as informações permitidas do próprio perfil.
-- [ ] Persistir nome, e-mail e telefone no perfil de cliente e disponibilizar edição controlada no painel e no aplicativo oficial.
+- [x] Aceitar ID TMDB opcional no cadastro de filmes, séries e novelas para preencher metadados e capas automaticamente.
+- [x] Adicionar na edição do cliente um botão para gerar e exibir uma nova senha numérica aleatória do Xtream V2, invalidando a anterior.
+- [x] Usar as mesmas credenciais numéricas Xtream V2 para autenticar o aplicativo oficial e obter a lista M3U, removendo a dependência do token de ativação nesses fluxos.
+- [x] Adicionar edição administrativa das informações do cliente no painel.
+- [x] Criar rota autenticada para o aplicativo oficial editar somente as informações permitidas do próprio perfil.
+- [x] Persistir nome, e-mail e telefone no perfil de cliente e disponibilizar edição controlada no painel e no aplicativo oficial.
 - [ ] Criar gestão de dispositivos ativos por cliente, respeitando o limite de telas e permitindo remover dispositivos para liberar vagas.
 - [ ] Deixar os campos de fallback M3U8 ocultos inicialmente e exibi-los individualmente apenas ao solicitar fallback para a qualidade correspondente.
 - [ ] Detectar no servidor manifestos M3U8 mestre por EXT-X-STREAM-INF e dispensar fontes separadas quando houver múltiplas qualidades no mesmo link.
@@ -53,7 +59,7 @@
 - [ ] Cobrir com testes a autorização das áreas administrativas EPG, VOD, PIX e integrações, além das listagens já verificadas.
 - [ ] Auditar a superfície pública do aplicativo para assegurar que não há estado, segredos ou dados administrativos incorporados sem autorização server-side.
 - [x] Substituir a tela explicativa de acesso restrito por uma página de login administrativo direta.
-- [ ] Substituir o login OAuth visível por uma página própria do Nexus Stream com usuário e senha administrativos configurados de forma segura no servidor.
+- [x] Substituir o login OAuth visível por uma página própria do Nexus Stream com usuário e senha administrativos configurados de forma segura no servidor.
 - [ ] Adaptar a arquitetura para Vercel Hobby, consolidando funções e evitando multiplicação desnecessária de endpoints e tarefas agendadas.
 - [ ] Migrar o banco de produção para PostgreSQL Neon e preparar um seeder idempotente de administrador e dados demonstrativos.
 - [ ] Preparar a entrega para Vercel Hobby com uma função Node consolidada e sem cron nativo a cada cinco minutos.
@@ -61,6 +67,14 @@
 - [ ] Documentar as variáveis de Neon, administrador local e agendador externo sem inserir valores ou abrir conexões nesta etapa.
 - [x] Renomear a rota pública de ativos de `/manus-storage` para `/storage` em todo o Nexus Stream.
 - [ ] Pesquisar e propor um novo nome distintivo para o painel IPTV, com triagem de uso aparente no setor antes de rebatizar a interface.
+- [ ] Descartar propostas de nome com associações fonéticas ambíguas ou indesejáveis antes de aplicar a nova marca.
+- [ ] Excluir Telvoro e Cenvara da shortlist por associações fonéticas indesejáveis em português e revisar a direção de nomenclatura.
+- [x] Auditar o fluxo PIX do Mercado Pago com a documentação oficial, incluindo criação de cobrança, consulta de status e validação de notificações.
+- [x] Validar o cabeçalho `x-signature` do webhook Mercado Pago com HMAC-SHA256, `data.id` e `x-request-id` antes de consultar ou atualizar cobranças.
+- [x] Cobrir o handler do webhook Mercado Pago para confirmar que eventos inválidos não consultam nem atualizam cobranças.
+- [ ] Executar as pendências priorizadas do backlog, preservando o histórico e marcando cada item somente após implementação e validação correspondente.
+- [ ] Criar e triar nomes inspirados no latim, relacionados a visão, luz, sinal ou movimento, antes de rebatizar o painel.
+- [ ] Substituir a identidade Nexus Stream por Videlis em títulos, textos, metadados e configurações visíveis.
 - [x] Auditar os estados do backlog e reabrir itens marcados como concluídos sem implementação e validação verificáveis.
 - [ ] Criar um monitor periódico de canais que teste origem e fallback, registre estado e última verificação.
 - [ ] Exibir no dashboard e na lista de canais o estado operacional, falhas e uso de fallback de cada canal.

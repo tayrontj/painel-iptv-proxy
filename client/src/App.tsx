@@ -8,12 +8,14 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { ChannelsPage, CustomersPage, EpgPage, SubscriptionsPage } from "./pages/AdminPages";
+import { ChannelsPage, EpgPage, SubscriptionsPage } from "./pages/AdminPages";
+import CustomersPage from "./pages/CustomersPage";
 import Home from "./pages/Home";
 import IntegrationsPage from "./pages/IntegrationsPage";
 import PlansPage from "./pages/PlansPage";
 import VodEpisodesPage from "./pages/VodEpisodesPage";
 import M3uPage from "./pages/M3uPage";
+import PixHistoryPage from "./pages/PixHistoryPage";
 import VodPage from "./pages/VodPage";
 import { AdminAccessGate } from "./components/PanelLayout";
 
@@ -33,6 +35,7 @@ function Router() {
       <AdminRoute path="/listas-m3u" component={M3uPage} />
       <AdminRoute path="/epg" component={EpgPage} />
       <AdminRoute path="/assinaturas" component={SubscriptionsPage} />
+      <AdminRoute path="/historico-pix" component={PixHistoryPage} />
       <AdminRoute path="/integracoes" component={IntegrationsPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

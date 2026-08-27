@@ -3,13 +3,12 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { handleMercadoPagoWebhook } from "../mercadoPagoWebhook";
-import { exportM3u, playbackChannel } from "../m3uExport";
+import { registerXtreamRoutes } from "../xtreamRoutes";
 import { handleScheduledEpgSync } from "../epgScheduled";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -38,10 +37,8 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
-  registerOAuthRoutes(app);
   app.post("/api/webhooks/mercado-pago", handleMercadoPagoWebhook);
-  app.get("/api/m3u", exportM3u);
-  app.get("/api/playback/:channelId", playbackChannel);
+  registerXtreamRoutes(app);
   app.post("/api/scheduled/epg-sync", handleScheduledEpgSync);
   // tRPC API
   app.use(

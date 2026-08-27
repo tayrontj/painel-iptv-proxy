@@ -1,0 +1,2 @@
+ALTER TABLE "customer_devices" ADD COLUMN "slot" integer NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "customer_devices_customer_slot_unique" ON "customer_devices" USING btree ("customer_id","slot");

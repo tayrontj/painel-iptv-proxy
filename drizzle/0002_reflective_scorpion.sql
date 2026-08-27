@@ -1,0 +1,1 @@
+ALTER TABLE "vod_items" ADD COLUMN "tmdb_id" integer;

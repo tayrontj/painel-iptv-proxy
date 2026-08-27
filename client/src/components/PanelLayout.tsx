@@ -1,5 +1,5 @@
 /**
- * Estrutura administrativa do Nexus Stream: barra lateral persistente, sinais
+ * Estrutura administrativa da Videlis: barra lateral persistente, sinais
  * operacionais e atalhos para as áreas de IPTV, VOD e assinatura.
  */
 import { Link, useLocation } from "wouter";
@@ -22,6 +22,7 @@ import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import AdminLoginPage from "@/pages/AdminLoginPage";
+import { SubscriptionPixHistory } from "@/components/SubscriptionPixHistory";
 
 type PanelLayoutProps = {
   children: React.ReactNode;
@@ -29,7 +30,7 @@ type PanelLayoutProps = {
 
 export function AdminAccessGate({ children }: PanelLayoutProps) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="grid min-h-screen place-items-center bg-[#091013] p-6 text-slate-100"><div className="surface-card w-full max-w-md p-7 text-center"><span className="signal-dot" /><p className="mt-5 font-mono text-[10px] uppercase tracking-[0.18em] text-[#9df6df]">Nexus Stream</p><h1 className="mt-2 text-xl font-extrabold">Validando sessão administrativa</h1><p className="mt-3 text-sm leading-6 text-slate-400">Aguardando confirmação de identidade e permissões.</p></div></div>;
+  if (loading) return <div className="grid min-h-screen place-items-center bg-[#091013] p-6 text-slate-100"><div className="surface-card w-full max-w-md p-7 text-center"><span className="signal-dot" /><p className="mt-5 font-mono text-[10px] uppercase tracking-[0.18em] text-[#9df6df]">Videlis</p><h1 className="mt-2 text-xl font-extrabold">Validando sessão administrativa</h1><p className="mt-3 text-sm leading-6 text-slate-400">Aguardando confirmação de identidade e permissões.</p></div></div>;
   if (user?.role !== "admin") return <AdminLoginPage />;
   return <>{children}</>;
 }
@@ -43,6 +44,7 @@ const navigation: { label: string; path?: string; icon: LucideIcon }[] = [
   { label: "Catálogo VOD", path: "/vod", icon: Clapperboard },
   { label: "EPG", path: "/epg", icon: Activity },
   { label: "Assinaturas PIX", path: "/assinaturas", icon: CircleDollarSign },
+  { label: "Histórico PIX", path: "/historico-pix", icon: CircleDollarSign },
   { label: "Configurações", path: "/integracoes", icon: Settings2 },
 ];
 
@@ -67,12 +69,12 @@ export default function PanelLayout({ children }: PanelLayoutProps) {
           <div className="grid h-10 w-10 place-items-center rounded-xl border border-[#43E6C2]/25 bg-[#43E6C2]/10 shadow-[0_0_22px_rgba(67,230,194,0.08)]">
             <img
               src="/storage/nexus-frequency-mark_5dbca578.png"
-              alt="Nexus Stream"
+              alt="Videlis"
               className="h-7 w-7 object-contain"
             />
           </div>
           <div>
-            <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.26em] text-[#43E6C2]">Nexus Stream</p>
+            <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.26em] text-[#43E6C2]">Videlis</p>
             <p className="mt-0.5 text-sm font-semibold tracking-tight text-white">Centro de controle</p>
           </div>
         </div>
@@ -150,7 +152,7 @@ export default function PanelLayout({ children }: PanelLayoutProps) {
             <span className="signal-dot h-1.5 w-1.5" /> Administração local
           </button>
         </div>
-        <div className="mx-auto w-full max-w-[1600px] px-5 py-7 sm:px-8 lg:px-10 lg:py-9">{children}</div>
+        <div className="mx-auto w-full max-w-[1600px] px-5 py-7 sm:px-8 lg:px-10 lg:py-9">{children}{location === "/assinaturas" ? <SubscriptionPixHistory /> : null}</div>
       </main>
     </div>
   );

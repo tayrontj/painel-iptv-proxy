@@ -32,12 +32,13 @@ const kinds: { id: VodKind; description: string; icon: typeof Film }[] = [
 export default function VodPage() {
   const [kind, setKind] = useState<VodKind>("filme");
   const [title, setTitle] = useState("");
+  const [tmdbId, setTmdbId] = useState("");
   const [year, setYear] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [synopsis, setSynopsis] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
   const [ageRating, setAgeRating] = useState("0");
-  const [metadataResults, setMetadataResults] = useState<Array<{ providerId: string; title: string; overview: string; releaseYear: number | null; posterUrl: string | null }>>([]);
+  const [metadataResults, setMetadataResults] = useState<Array<{ providerId: string; tmdbId: number; title: string; overview: string; releaseYear: number | null; posterUrl: string | null }>>([]);
   const utils = trpc.useUtils();
   const { user } = useAuth();
   const catalogQuery = trpc.vod.list.useQuery();
@@ -45,7 +46,7 @@ export default function VodPage() {
     onSuccess: async () => {
       await utils.vod.list.invalidate();
       toast.success("VOD salvo no catálogo administrativo.");
-      setTitle(""); setYear(""); setSourceUrl(""); setSynopsis(""); setPosterUrl(""); setAgeRating("0");
+      setTitle(""); setTmdbId(""); setYear(""); setSourceUrl(""); setSynopsis(""); setPosterUrl(""); setAgeRating("0");
     },
     onError: error => toast.error(error.message),
   });
@@ -58,6 +59,7 @@ export default function VodPage() {
     },
     onError: error => toast.error(error.message),
   });
+  const metadataLookup = trpc.vod.lookupMetadata.useMutation({ onSuccess: result => applyMetadata(result), onError: error => toast.error(error.message) });
 
   const selectedKind = useMemo(() => kinds.find(item => item.id === kind)!, [kind]);
   const isEpisodic = kind === "serie" || kind === "novela";
@@ -75,12 +77,19 @@ export default function VodPage() {
   };
 
   const applyMetadata = (result: (typeof metadataResults)[number]) => {
+    setTmdbId(String(result.tmdbId));
     setTitle(result.title);
     setYear(result.releaseYear ? String(result.releaseYear) : "");
     setSynopsis(result.overview);
     setPosterUrl(result.posterUrl || "");
     setMetadataResults([]);
     toast.success("Detalhes de VOD aplicados ao formulário.");
+  };
+
+  const handleTmdbLookup = () => {
+    const parsed = Number(tmdbId);
+    if (!Number.isInteger(parsed) || parsed < 1) { toast.error("Informe um ID TMDB numérico válido."); return; }
+    metadataLookup.mutate({ tmdbId: parsed, kind });
   };
 
   const handleSave = () => {
@@ -97,7 +106,9 @@ export default function VodPage() {
     if (sourceUrl.trim()) {
       try { new URL(sourceUrl); } catch { toast.error("Informe uma URL de reprodução válida."); return; }
     }
-    createVod.mutate({ title: title.trim(), kind, releaseYear: parsedYear, sourceUrl: sourceUrl.trim() || null, synopsis: synopsis.trim() || null, posterUrl: posterUrl || null, ageRating: Number(ageRating) });
+    const parsedTmdbId = tmdbId.trim() ? Number(tmdbId) : null;
+    if (parsedTmdbId !== null && (!Number.isInteger(parsedTmdbId) || parsedTmdbId < 1)) { toast.error("Informe um ID TMDB numérico válido."); return; }
+    createVod.mutate({ title: title.trim(), kind, tmdbId: parsedTmdbId, releaseYear: parsedYear, sourceUrl: sourceUrl.trim() || null, synopsis: synopsis.trim() || null, posterUrl: posterUrl || null, ageRating: Number(ageRating) });
   };
 
   return (
@@ -118,7 +129,7 @@ export default function VodPage() {
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-slate-500">Novo registro</p>
               <h2 className="mt-1 text-xl font-bold tracking-tight text-white">Tipo de conteúdo</h2>
             </div>
-            <button type="button" disabled={metadataSearch.isPending} onClick={handleMetadataSearch} className="pressable inline-flex items-center gap-2 rounded-xl border border-[#43E6C2]/20 bg-[#43E6C2]/[0.07] px-3 py-2 text-xs font-bold text-[#9df6df] transition hover:bg-[#43E6C2]/[0.13] disabled:cursor-wait disabled:opacity-60"><Search className="h-3.5 w-3.5" /> {metadataSearch.isPending ? "Buscando" : "Buscar metadados"}</button>
+            <div className="flex flex-wrap gap-2"><button type="button" disabled={metadataSearch.isPending} onClick={handleMetadataSearch} className="pressable inline-flex items-center gap-2 rounded-xl border border-[#43E6C2]/20 bg-[#43E6C2]/[0.07] px-3 py-2 text-xs font-bold text-[#9df6df] transition hover:bg-[#43E6C2]/[0.13] disabled:cursor-wait disabled:opacity-60"><Search className="h-3.5 w-3.5" /> {metadataSearch.isPending ? "Buscando" : "Buscar por título"}</button><button type="button" disabled={metadataLookup.isPending} onClick={handleTmdbLookup} className="pressable inline-flex items-center gap-2 rounded-xl border border-white/[.1] bg-white/[.03] px-3 py-2 text-xs font-bold text-slate-200 transition hover:bg-white/[.07] disabled:cursor-wait disabled:opacity-60"><Link2 className="h-3.5 w-3.5" /> {metadataLookup.isPending ? "Consultando" : "Usar ID TMDB"}</button></div>
           </div>
 
           <div className="mt-6 grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Tipo de VOD">
@@ -138,6 +149,9 @@ export default function VodPage() {
           <div className="mt-7 grid gap-5 sm:grid-cols-2">
             <label className="form-label sm:col-span-2">Título
               <input value={title} onChange={event => setTitle(event.target.value)} placeholder={`Ex.: novo ${getVodKindLabel(kind).toLowerCase()}`} className="form-input" />
+            </label>
+            <label className="form-label">ID TMDB <span className="normal-case tracking-normal text-slate-500">opcional</span>
+              <input value={tmdbId} onChange={event => setTmdbId(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="Ex.: 550" className="form-input" />
             </label>
             <label className="form-label">Ano de lançamento
               <input value={year} onChange={event => setYear(event.target.value)} inputMode="numeric" placeholder="AAAA" className="form-input" />
