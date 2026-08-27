@@ -102,3 +102,6 @@
 - [x] Cobrir o Worker Cloudflare de mídia para manifesto HLS, transmissão binária e propagação de erros sem expor a origem.
 - [x] Preparar e sincronizar a versão validada do projeto Videlis com o repositório GitHub informado pelo usuário, após confirmação explícita do envio.
 - [x] Avaliar funções PostgreSQL no Neon para invariantes transacionais do Videlis e documentar a divisão recomendada entre banco, API e Workers.
+- [x] Substituir qualquer limitação de reprodução por canal por um limite global de sessões simultâneas por cliente, aplicado a Xtream, API oficial e gateway de mídia.
+- [x] Criar registros duráveis de sessões de reprodução com expiração, identificação de dispositivo e recuperação de vaga após inatividade.
+- [x] Preparar função PostgreSQL Neon para reservar e renovar sessão global de reprodução de forma atômica quando o banco for conectado.

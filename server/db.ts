@@ -4,7 +4,7 @@ import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import * as schema from "../drizzle/schema";
-import { androidReleases, channelSources, channels, customerDevices, customers, epgProgrammes, epgSources, integrationSettings, schedulerLocks, type InsertUser, planCycles, plans, pixCharges, users, vodEpisodes, vodItems, vodSeasons } from "../drizzle/schema";
+import { androidReleases, channelSources, channels, customerDevices, customers, epgProgrammes, epgSources, integrationSettings, playbackSessions, schedulerLocks, type InsertUser, planCycles, plans, pixCharges, users, vodEpisodes, vodItems, vodSeasons } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { encryptIntegrationSecret } from "./integrationSecrets";
 import { adminOpenId, verifyAdminPassword } from "./adminCredentials";
@@ -81,6 +81,19 @@ export async function registerCustomerDevice(input: { customerId: number; device
   try { const [created] = await db.insert(customerDevices).values({ customerId: input.customerId, slot, deviceName: input.deviceName, deviceKeyHash, lastSeenAt: new Date() }).returning({ id: customerDevices.id, slot: customerDevices.slot, deviceName: customerDevices.deviceName, lastSeenAt: customerDevices.lastSeenAt, createdAt: customerDevices.createdAt }); if (!created) throw new Error("Não foi possível registrar o dispositivo"); await syncUsedScreens(db, input.customerId); return created; } catch (error) { if (!retry) return registerCustomerDevice(input, true); throw error; }
 }
 export async function removeCustomerDevice(input: { customerId: number; deviceId: number }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const removed = await db.delete(customerDevices).where(and(eq(customerDevices.id, input.deviceId), eq(customerDevices.customerId, input.customerId))).returning({ id: customerDevices.id }); if (!removed[0]) throw new Error("Dispositivo não encontrado para este cliente"); await syncUsedScreens(db, input.customerId); }
+export type PlaybackSessionReservation = { allowed: boolean; activeSessions: number; expiresAt: Date | null };
+/** Reserva ou renova uma tela global. A função SQL serializa concorrências por cliente. */
+export async function acquirePlaybackSession(input: { customerId: number; consumerKeyHash: string; leaseSeconds?: number }): Promise<PlaybackSessionReservation> {
+  const db = await getDb(); if (!db) throw new Error("Banco indisponível");
+  const leaseSeconds = Math.max(30, Math.min(900, input.leaseSeconds ?? 120));
+  const result = await db.execute(sql`SELECT allowed, active_sessions, expires_at FROM videlis_acquire_playback_session(${input.customerId}, ${input.consumerKeyHash}, ${leaseSeconds})`);
+  const rows = (result as unknown as { rows?: Array<{ allowed: boolean; active_sessions: number; expires_at: Date | string | null }> }).rows || [];
+  const row = rows[0];
+  if (!row) throw new Error("Não foi possível reservar a sessão de reprodução.");
+  return { allowed: Boolean(row.allowed), activeSessions: Number(row.active_sessions), expiresAt: row.expires_at ? new Date(row.expires_at) : null };
+}
+export async function listActivePlaybackSessions(customerId: number) { const db = await getDb(); if (!db) return []; return db.select({ id: playbackSessions.id, expiresAt: playbackSessions.expiresAt, lastSeenAt: playbackSessions.lastSeenAt }).from(playbackSessions).where(and(eq(playbackSessions.customerId, customerId), sql`${playbackSessions.expiresAt} > NOW()`)).orderBy(desc(playbackSessions.lastSeenAt)); }
+export async function terminatePlaybackSession(input: { customerId: number; sessionId: number }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const removed = await db.delete(playbackSessions).where(and(eq(playbackSessions.id, input.sessionId), eq(playbackSessions.customerId, input.customerId))).returning({ id: playbackSessions.id }); if (!removed[0]) throw new Error("Sessão de reprodução não encontrada"); }
 
 export async function listChannels() { const db = await getDb(); return db ? db.select().from(channels).orderBy(desc(channels.updatedAt)) : []; }
 export async function createChannel(input: { name: string; groupTitle: string; channelNumber: number; epgId?: string | null; logoUrl?: string | null; ageRating: number; sources: Array<{ quality: string; primaryUrl: string; primaryOrigin?: string | null; primaryReferer?: string | null; fallbackUrl?: string | null; fallbackOrigin?: string | null; fallbackReferer?: string | null }> }) {

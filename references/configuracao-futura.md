@@ -42,9 +42,13 @@ O painel assina apenas o manifesto de atualização, enquanto o APK precisa cont
 
 > O fluxo nativo deve sempre solicitar a confirmação do instalador do Android. Instalação silenciosa somente é possível em aparelhos corporativos administrados como device owner ou profile owner. [5]
 
-## Reprodução por gateway de mídia
+## Reprodução por gateway de mídia e limite global de telas
 
-As respostas M3U, Xtream e da API do aplicativo passam a devolver um ticket assinado com validade de dois minutos para o gateway Cloudflare. O gateway pede a resolução da origem ao endpoint interno Vercel autenticado por segredo, aplica `Origin` e `Referer` quando cadastrados e transmite a resposta ao player. Assim, a função Vercel não baixa o arquivo inteiro na memória nem mantém uma conexão de mídia aberta.
+As respostas M3U, Xtream e da API do aplicativo devolvem um ticket assinado com validade de dois minutos e um SID opaco de consumidor para o gateway Cloudflare. O app oficial deve enviar `x-videlis-device-id` estável por instalação; para clientes Xtream sem suporte a cabeçalhos, a resposta gera um SID aleatório e o preserva nos links de mídia. O SID nunca é uma credencial Xtream, nem IP, e somente o seu hash SHA-256 é persistido no Neon.
+
+O gateway encaminha o hash ao endpoint interno Vercel autenticado por segredo. Antes de receber a origem, cada requisição renova a mesma sessão global em `playback_sessions`, por meio de `videlis_acquire_playback_session`. Ao atingir `screen_limit`, um novo consumidor recebe HTTP `429`; outra reprodução do mesmo consumidor renova sua locação sem ocupar vaga adicional. Manifestos HLS reescritos conservam ticket e SID em chaves e segmentos, permitindo a renovação contínua. Após 120 segundos sem requisições, a sessão expira e a vaga é liberada.
+
+O gateway aplica `Origin` e `Referer` quando cadastrados e transmite a resposta ao player. Assim, a função Vercel não baixa o arquivo inteiro na memória nem mantém uma conexão de mídia aberta.
 
 ## Referências
 

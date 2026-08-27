@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getCustomerByXtreamCredentials: vi.fn(),
   listPixChargesForCustomer: vi.fn(),
-  listCustomerDevices: vi.fn(), registerCustomerDevice: vi.fn(), removeCustomerDevice: vi.fn(), updateCustomerProfile: vi.fn(), applyCustomerPlanChange: vi.fn(), listPlans: vi.fn(), getPlanCycle: vi.fn(), createPixCharge: vi.fn(), listEpgProgrammes: vi.fn(), listChannels: vi.fn(), listVodItems: vi.fn(), listVodEpisodes: vi.fn(),
+  listCustomerDevices: vi.fn(), listActivePlaybackSessions: vi.fn(), registerCustomerDevice: vi.fn(), removeCustomerDevice: vi.fn(), updateCustomerProfile: vi.fn(), applyCustomerPlanChange: vi.fn(), listPlans: vi.fn(), getPlanCycle: vi.fn(), createPixCharge: vi.fn(), listEpgProgrammes: vi.fn(), listChannels: vi.fn(), listVodItems: vi.fn(), listVodEpisodes: vi.fn(),
 }));
 
 vi.mock("./db", () => ({
@@ -13,7 +13,7 @@ vi.mock("./db", () => ({
   listChannels: mocks.listChannels, listVodItems: mocks.listVodItems, listEpgSources: vi.fn(), listEpgProgrammes: mocks.listEpgProgrammes,
   authenticateAdmin: vi.fn(), listIntegrationSettings: vi.fn(), saveIntegrationSetting: vi.fn(),
   getCustomerById: vi.fn(), createPixCharge: mocks.createPixCharge, listCustomers: vi.fn(), createCustomer: vi.fn(), updateCustomerStatus: vi.fn(), updateCustomerProfile: mocks.updateCustomerProfile,
-  listCustomerDevices: mocks.listCustomerDevices, registerCustomerDevice: mocks.registerCustomerDevice, removeCustomerDevice: mocks.removeCustomerDevice,
+  listCustomerDevices: mocks.listCustomerDevices, listActivePlaybackSessions: mocks.listActivePlaybackSessions, registerCustomerDevice: mocks.registerCustomerDevice, removeCustomerDevice: mocks.removeCustomerDevice, terminatePlaybackSession: vi.fn(),
   inspectM3uManifest: vi.fn(), createEpgSource: vi.fn(), listVodSeasons: vi.fn(), listVodEpisodes: mocks.listVodEpisodes, createVodSeason: vi.fn(), createVodEpisode: vi.fn(), createVodItem: vi.fn(),
 }));
 
@@ -42,9 +42,9 @@ describe("API oficial autenticada por Xtream", () => {
   });
 
   it("permite ao aplicativo consultar e editar somente o próprio perfil", async () => {
-    mocks.getCustomerByXtreamCredentials.mockResolvedValue({ ...customer, label: "Maria", email: "maria@exemplo.com", phone: "11999999999", plan: "Premium", screenLimit: 2, usedScreens: 1 });
+    mocks.getCustomerByXtreamCredentials.mockResolvedValue({ ...customer, label: "Maria", email: "maria@exemplo.com", phone: "11999999999", plan: "Premium", screenLimit: 2, usedScreens: 1 }); mocks.listActivePlaybackSessions.mockResolvedValue([{ id: 1 }, { id: 2 }]);
     const caller = appRouter.createCaller(ctx);
-    await expect(caller.app.profile({ username: "1234567890", password: "987654321012" })).resolves.toMatchObject({ label: "Maria", screenLimit: 2, usedScreens: 1 });
+    await expect(caller.app.profile({ username: "1234567890", password: "987654321012" })).resolves.toMatchObject({ label: "Maria", screenLimit: 2, usedScreens: 1, activeScreens: 2 });
     await caller.app.updateProfile({ username: "1234567890", password: "987654321012", label: "Maria Silva", email: "nova@exemplo.com", phone: "11988888888" });
     expect(mocks.updateCustomerProfile).toHaveBeenCalledWith({ id: 7, label: "Maria Silva", email: "nova@exemplo.com", phone: "11988888888" });
   });
@@ -77,7 +77,7 @@ describe("API oficial autenticada por Xtream", () => {
     mocks.listVodEpisodes.mockResolvedValue([{ id: 31, seasonId: null, episodeNumber: 1, title: "Episódio 1", publishedAt: new Date("2026-08-27T00:00:00Z"), sourceUrl: "https://origem.exemplo/episodio.m3u8" }]);
     mocks.listEpgProgrammes.mockResolvedValue([{ id: 41, channelEpgId: "adulto.9", title: "Programa adulto", synopsis: null, startsAt: new Date(), endsAt: new Date(), ageRating: 18 }]);
     const result = await appRouter.createCaller(ctx).app.catalog({ username: "1234567890", password: "987654321012" });
-    expect(result.playback).toMatchObject({ credentialTransport: "headers", usernameHeader: "x-videlis-username" }); expect(result.channels[0]).toMatchObject({ id: 9, playbackPath: "/api/app/playback/live/9", requiresAdultPin: true, ageRating: 18 }); expect(result.vod[0]).toMatchObject({ tmdbId: 500, playbackPath: null, requiresAdultPin: true }); expect(result.episodes[0]).toMatchObject({ id: 31, playbackPath: "/api/app/playback/episode/31", requiresAdultPin: true }); expect(result.epg[0]).toMatchObject({ id: 41, channelId: 9, requiresAdultPin: true });
+    expect(result.playback).toMatchObject({ credentialTransport: "headers", usernameHeader: "x-videlis-username", deviceIdHeader: "x-videlis-device-id" }); expect(result.channels[0]).toMatchObject({ id: 9, playbackPath: "/api/app/playback/live/9", requiresAdultPin: true, ageRating: 18 }); expect(result.vod[0]).toMatchObject({ tmdbId: 500, playbackPath: null, requiresAdultPin: true }); expect(result.episodes[0]).toMatchObject({ id: 31, playbackPath: "/api/app/playback/episode/31", requiresAdultPin: true }); expect(result.epg[0]).toMatchObject({ id: 41, channelId: 9, requiresAdultPin: true });
     expect(result.vod).toHaveLength(1); expect(JSON.stringify(result)).not.toContain("Rascunho");
     expect(JSON.stringify(result)).not.toContain("origem.exemplo"); expect(JSON.stringify(result)).not.toContain("987654321012");
   });

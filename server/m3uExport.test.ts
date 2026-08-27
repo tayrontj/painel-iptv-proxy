@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   getChannelSources: vi.fn(),
   getVodEpisodeById: vi.fn(),
   getVodItemById: vi.fn(),
+  listActivePlaybackSessions: vi.fn(),
   listChannels: vi.fn(),
   listVodEpisodes: vi.fn(),
   listVodItems: vi.fn(),
@@ -28,6 +29,7 @@ describe("exportação Xtream V2", () => {
     process.env.PLAYBACK_TICKET_SECRET = "ticket-de-teste-seguro";
     process.env.PLAYBACK_EDGE_BASE_URL = "https://media.test.videlis.local";
     mocks.getCustomerByXtreamCredentials.mockResolvedValue(customer);
+    mocks.listActivePlaybackSessions.mockResolvedValue([]);
     mocks.listChannels.mockResolvedValue([{ id: 10, isActive: true, name: "Canal Teste", groupTitle: "Ao vivo", epgId: "canal.teste", logoUrl: null, channelNumber: 10, updatedAt: new Date() }]);
     mocks.listVodEpisodes.mockResolvedValue([]);
     mocks.listVodSeasons.mockResolvedValue([]);
@@ -60,8 +62,9 @@ describe("exportação Xtream V2", () => {
 
   it("expõe o handshake padrão do player API após autenticação", async () => {
     const res = response();
+    mocks.listActivePlaybackSessions.mockResolvedValue([{ id: 1 }, { id: 2 }]);
     await xtreamPlayerApi({ query: { username: "1234567890", password: "987654321012" }, params: {}, protocol: "https", get: () => "painel.exemplo.com" } as any, res);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ user_info: expect.objectContaining({ auth: 1, username: "1234567890" }) }));
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ user_info: expect.objectContaining({ auth: 1, username: "1234567890", active_cons: "2", max_connections: "2" }) }));
   });
 
   it("expõe filmes pelo endpoint Xtream intermediado, sem a origem cadastrada", async () => {

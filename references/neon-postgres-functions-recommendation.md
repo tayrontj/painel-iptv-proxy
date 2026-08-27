@@ -8,7 +8,7 @@ Para o Videlis, a melhor regra é simples: usar uma função PostgreSQL apenas q
 
 | Responsabilidade | Melhor camada | Motivo |
 | --- | --- | --- |
-| Reservar uma vaga de tela e registrar o dispositivo | Função PostgreSQL | A reserva, a vaga disponível, o dispositivo e `used_screens` precisam mudar de maneira atômica. |
+| Reservar uma tela de reprodução global | Função PostgreSQL | A sessão ativa, a capacidade disponível e sua renovação precisam mudar de maneira atômica, independentemente do conteúdo reproduzido. |
 | Liquidar PIX aprovado e trocar plano | Função/procedimento PostgreSQL | A cobrança só pode ser reivindicada uma vez e a atualização do plano precisa pertencer à mesma transação. |
 | Adquirir ou liberar lock de monitor/EPG | SQL atômico ou função PostgreSQL curta | O lock já pertence ao banco; uma função só reduz repetição se houver mais de um chamador. |
 | Consultar catálogo, perfil ou EPG | API Vercel + SQL normal | Regras de autorização e DTOs seguros evoluem com frequência e não devem ficar escondidos no banco. |
@@ -19,9 +19,13 @@ Para o Videlis, a melhor regra é simples: usar uma função PostgreSQL apenas q
 
 ## Funções que valem a pena depois da conexão Neon
 
-### 1. Reserva atômica de tela
+### 1. Reserva atômica de sessão global de reprodução
 
-Hoje o servidor procura a vaga livre, insere o dispositivo e atualiza `used_screens`. Embora exista uma segunda tentativa para colisões, uma função como `videlis_register_device(...)` pode encapsular tudo em uma única transação: travar o cliente, descobrir a menor vaga disponível, inserir o hash da chave do dispositivo e atualizar o contador. Isso reduz a chance de duas autenticações simultâneas disputarem a última tela.
+O Videlis mantém a migração `0008_spooky_leech.sql` preparada com a função `videlis_acquire_playback_session(customer_id, consumer_key_hash, lease_seconds)`. Ela bloqueia a linha do cliente com `FOR UPDATE`, remove as sessões expiradas daquele cliente, renova a mesma sessão quando o mesmo consumidor volta a requisitar mídia e, somente para um novo consumidor, confere `screen_limit` antes de inserir a sessão.
+
+> Uma **sessão de reprodução** é global ao cliente: ela não contém canal, filme, episódio, qualidade ou URL de origem. Assim, um cliente com duas telas pode assistir a conteúdos diferentes em duas telas, mas uma terceira reprodução é recusada, ainda que seja outro canal.
+
+`customer_devices` continua sendo o cadastro de aparelhos autorizados pelo cliente; não é a fonte de verdade para conexões simultâneas. A sessão de reprodução armazena somente o hash de um identificador opaco de dispositivo/consumidor, `last_seen_at` e `expires_at`. A locação inicial é de 120 segundos, renovada no resolvedor privado a cada requisição de manifesto ou segmento HLS. Depois de inatividade, a vaga volta a ficar disponível sem necessidade de job agendado.
 
 A implementação deve usar `SECURITY INVOKER` — o padrão do PostgreSQL — e ser chamada somente pela API autenticada. Não recomendo `SECURITY DEFINER` nesta fase, pois ele amplia o risco de elevação de privilégio caso permissões, `search_path` ou parâmetros sejam configurados incorretamente.
 
@@ -43,7 +47,7 @@ Também não recomendo usar `pg_cron` para o monitor de cinco minutos. O Neon in
 
 ## Adoção incremental recomendada
 
-Depois de conectar o Neon, primeiro aplicar as migrações existentes e o seeder. Em seguida, adicionar uma migração exclusiva para `videlis_register_device` e cobri-la com teste de concorrência. A segunda migração deve introduzir `videlis_settle_pix_charge`, acompanhada de teste de reenvio de webhook. Só então faz sentido substituir os trechos equivalentes de `server/db.ts` por chamadas SQL para as funções.
+Depois de conectar o Neon, primeiro aplicar as migrações existentes — inclusive `0008_spooky_leech.sql`, que já contém `videlis_acquire_playback_session` — e o seeder. Em seguida, validar com duas requisições concorrentes na última vaga e com renovação do mesmo `consumer_key_hash`. A próxima função prioritária é `videlis_settle_pix_charge`, acompanhada de teste de reenvio de webhook. Só então faz sentido avaliar uma função separada para o cadastro persistente de dispositivos.
 
 ## Referências
 
