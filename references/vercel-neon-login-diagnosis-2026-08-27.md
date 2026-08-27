@@ -25,3 +25,9 @@ Uma consulta direta à rota publicada `/api/trpc/auth.me` retornou a página da 
 Na página de recursos da implantação, a Vercel confirmou a publicação de uma única função Node em `/api/[...path]`. Entretanto, o acesso literal a esse caminho respondeu `FUNCTION_INVOCATION_FAILED`, enquanto `/api/trpc/auth.me` respondeu `404`. Isso confirma que a função existe, mas o roteamento dinâmico não a encaminha e a inicialização do handler requer análise separada. A correção deve usar uma rota estável de função e um rewrite explícito de `/api/:path*`, mantendo apenas uma função publicada.
 
 O log de runtime identificou a causa da falha de inicialização: `ERR_MODULE_NOT_FOUND` ao importar `/var/task/server/app` a partir da função. A função publicada existe, mas o runtime ESM da Vercel não recebeu a dependência relativa do handler no formato resolvível. A correção deve empacotar o Express e suas dependências locais junto à função de API, em vez de depender de uma importação relativa externa após o deploy.
+
+## Compatibilidade Vite + Express confirmada
+
+A documentação oficial diferencia os dois modelos: projetos Vite que precisam de API devem publicar Functions dentro de `/api`, enquanto o reconhecimento automático de um servidor Express exportado na raiz pertence ao preset Express. Como o Videlis mantém o build React/Vite, a correção compatível preservará **uma única função em `/api`** e incluirá explicitamente um bundle gerado da aplicação Express. Assim, a função não tentará resolver arquivos TypeScript externos em tempo de execução e o projeto não criará funções adicionais.
+
+Referências: [Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite), [configuração de Functions](https://vercel.com/docs/project-configuration/vercel-json#functions) e [Express on Vercel](https://vercel.com/docs/frameworks/backend/express).

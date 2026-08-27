@@ -112,4 +112,5 @@
 - [ ] Corrigir a implantação Vercel que responde 404 para `/api/trpc` e impede o login administrativo.
 - [ ] Corrigir o empacotamento da função Vercel que não localiza `server/app` e retorna erro 500 em `/api/trpc`.
 - [ ] Substituir o handler `/api` incompatível por um servidor Node raiz capturado pela Vercel, preservando a função única do projeto.
+- [ ] Corrigir a configuração Vercel que prioriza o preset Vite estático e não registra o servidor Express raiz para `/api/trpc`.
 - [x] Configurar na Vercel os segredos restantes de reprodução autorizados, sem alterar Mercado Pago ou atualização Android.
