@@ -100,4 +100,4 @@
 - [x] Substituir o proxy Xtream que baixa mídia inteira em memória por uma estratégia de reprodução compatível com Vercel e validar live, filme, episódio e negação de credenciais.
 - [x] Cobrir o resolvedor interno de reprodução com autorização do gateway, tickets inválidos e resolução segura de canal, filme e episódio.
 - [x] Cobrir o Worker Cloudflare de mídia para manifesto HLS, transmissão binária e propagação de erros sem expor a origem.
-- [ ] Preparar e sincronizar a versão validada do projeto Videlis com o repositório GitHub informado pelo usuário, após confirmação explícita do envio.
+- [x] Preparar e sincronizar a versão validada do projeto Videlis com o repositório GitHub informado pelo usuário, após confirmação explícita do envio.
