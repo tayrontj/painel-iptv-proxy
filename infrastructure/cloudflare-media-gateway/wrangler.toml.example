@@ -1,0 +1,7 @@
+name = "videlis-media-gateway"
+main = "src/index.ts"
+compatibility_date = "2026-08-27"
+
+# Configure como secret via `wrangler secret put`, nunca neste arquivo:
+# VERCEL_API_BASE_URL=https://seu-dominio.vercel.app
+# PLAYBACK_EDGE_RESOLVER_SECRET=valor-compartilhado-com-a-vercel

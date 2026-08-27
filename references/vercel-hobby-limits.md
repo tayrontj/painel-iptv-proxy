@@ -2,7 +2,7 @@
 
 Consulta em 27 de agosto de 2026 às páginas oficiais da Vercel.
 
-| Recurso | Limite Hobby relevante | Impacto para o Nexus Stream |
+| Recurso | Limite Hobby relevante | Impacto para a Videlis |
 | --- | --- | --- |
 | Invocações de Function | 1.000.000 incluídas por mês | Consolidar a API em um único handler e evitar chamadas de polling no cliente. |
 | Active CPU | 4 CPU-horas incluídas por mês | Responder cedo e deixar streaming pesado fora da Vercel. |

@@ -41,4 +41,13 @@ describe("autorização administrativa", () => {
   it("nega releases Android para conta autenticada sem papel admin", async () => {
     await expect(appRouter.createCaller(userContext("user")).androidUpdates.list()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
+
+  it("nega mutações administrativas de clientes, canais, EPG, VOD e releases", async () => {
+    const caller = appRouter.createCaller(userContext("user"));
+    await expect(caller.customers.setStatus({ id: 1, status: "expired" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.channels.toggle({ id: 1, isActive: false })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.epg.syncNow({ id: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.vod.create({ title: "Filme", kind: "filme", sourceUrl: "https://cdn.exemplo/filme.mp4" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.androidUpdates.archive({ id: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
 });

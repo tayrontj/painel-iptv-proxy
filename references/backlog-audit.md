@@ -1,4 +1,4 @@
-# Auditoria do backlog — Nexus Stream
+# Auditoria do backlog — Videlis
 
 **Data:** 27 de agosto de 2026  
 **Escopo:** conferência do arquivo `todo.md` contra a implementação, os testes recentes e as limitações ainda registradas no projeto.

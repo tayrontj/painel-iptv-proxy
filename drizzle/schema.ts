@@ -1,4 +1,4 @@
-/** Modelos PostgreSQL persistentes do Nexus Stream. */
+/** Modelos PostgreSQL persistentes da Videlis. */
 import { boolean, integer, pgEnum, pgTable, serial, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 
 const touch = () => new Date();

@@ -8,6 +8,7 @@ import { registerXtreamRoutes } from "./xtreamRoutes";
 import { registerAppPlaybackRoutes } from "./appPlaybackRoutes";
 import { handleScheduledJob } from "./scheduledJobs";
 import { registerAndroidUpdateRoutes } from "./androidUpdateRoutes";
+import { registerPlaybackResolverRoutes } from "./playbackResolverRoutes";
 
 /** Aplicação HTTP única, reutilizada tanto pelo processo local quanto pelo handler catch-all da Vercel. */
 export function createApp() {
@@ -20,6 +21,7 @@ export function createApp() {
   registerXtreamRoutes(app);
   registerAppPlaybackRoutes(app);
   registerAndroidUpdateRoutes(app);
+  registerPlaybackResolverRoutes(app);
   app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
   return app;
 }

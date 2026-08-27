@@ -15,7 +15,7 @@ vi.mock("./db", () => mocks);
 import { exportM3u, playbackChannel, playbackVod, xtreamPlayerApi } from "./m3uExport";
 
 function response() {
-  const result: any = { status: vi.fn(), type: vi.fn(), send: vi.fn(), sendStatus: vi.fn(), setHeader: vi.fn(), json: vi.fn() };
+  const result: any = { status: vi.fn(), type: vi.fn(), send: vi.fn(), sendStatus: vi.fn(), setHeader: vi.fn(), json: vi.fn(), redirect: vi.fn() };
   result.status.mockReturnValue(result); result.type.mockReturnValue(result);
   return result;
 }
@@ -25,6 +25,8 @@ const customer = { id: 1, status: "active", expiresAt: new Date(Date.now() + 86_
 describe("exportação Xtream V2", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.PLAYBACK_TICKET_SECRET = "ticket-de-teste-seguro";
+    process.env.PLAYBACK_EDGE_BASE_URL = "https://media.test.videlis.local";
     mocks.getCustomerByXtreamCredentials.mockResolvedValue(customer);
     mocks.listChannels.mockResolvedValue([{ id: 10, isActive: true, name: "Canal Teste", groupTitle: "Ao vivo", epgId: "canal.teste", logoUrl: null, channelNumber: 10, updatedAt: new Date() }]);
     mocks.listVodEpisodes.mockResolvedValue([]);
@@ -36,7 +38,7 @@ describe("exportação Xtream V2", () => {
     const res = response();
     await exportM3u({ query: { username: "1234567890", password: "987654321012" }, params: {}, protocol: "https", get: () => "painel.exemplo.com" } as any, res);
     expect(mocks.getCustomerByXtreamCredentials).toHaveBeenCalledWith("1234567890", "987654321012");
-    expect(res.send.mock.calls[0][0]).toContain("/api/playback/10?username=1234567890&password=987654321012");
+    expect(res.send.mock.calls[0][0]).toContain("https://media.test.videlis.local/media?ticket=");
     expect(res.send.mock.calls[0][0]).not.toContain("token=");
   });
 
@@ -63,15 +65,15 @@ describe("exportação Xtream V2", () => {
   });
 
   it("expõe filmes pelo endpoint Xtream intermediado, sem a origem cadastrada", async () => {
-    mocks.listVodItems.mockResolvedValue([{ id: 41, kind: "filme", title: "Filme de teste", posterUrl: null, synopsis: null, sourceUrl: "https://origem.exemplo/arquivo.mkv?token=segredo", updatedAt: new Date() }]);
+    mocks.listVodItems.mockResolvedValue([{ id: 41, kind: "filme", status: "ready", title: "Filme de teste", posterUrl: null, synopsis: null, sourceUrl: "https://origem.exemplo/arquivo.mkv?token=segredo", updatedAt: new Date() }]);
     const res = response();
     await xtreamPlayerApi({ query: { username: "1234567890", password: "987654321012", action: "get_vod_streams" }, params: {}, protocol: "https", get: () => "painel.exemplo.com" } as any, res);
-    expect(res.json).toHaveBeenCalledWith([expect.objectContaining({ stream_id: 41, container_extension: "mkv", stream_url: "https://painel.exemplo.com/movie/1234567890/987654321012/41.mkv" })]);
+    expect(res.json).toHaveBeenCalledWith([expect.objectContaining({ stream_id: 41, container_extension: "mkv", stream_url: expect.stringContaining("https://media.test.videlis.local/media?ticket=") })]);
     expect(JSON.stringify(res.json.mock.calls)).not.toContain("origem.exemplo");
   });
 
   it("organiza episódios Xtream por temporada", async () => {
-    mocks.listVodItems.mockResolvedValue([{ id: 70, kind: "serie", title: "Série", posterUrl: null, synopsis: null, updatedAt: new Date() }]);
+    mocks.listVodItems.mockResolvedValue([{ id: 70, kind: "serie", status: "ready", title: "Série", posterUrl: null, synopsis: null, updatedAt: new Date() }]);
     mocks.listVodSeasons.mockResolvedValue([{ id: 12, seasonNumber: 2 }]);
     mocks.listVodEpisodes.mockResolvedValue([{ id: 91, seasonId: 12, episodeNumber: 1, title: "Episódio", sourceUrl: "https://origem/ep.m3u8", publishedAt: new Date() }]);
     const res = response();
@@ -87,22 +89,22 @@ describe("exportação Xtream V2", () => {
     expect(res.sendStatus).toHaveBeenCalledWith(401); expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("reproduz o manifest do canal para credenciais Xtream autorizadas", async () => {
+  it("redireciona o manifest do canal para o gateway autorizado sem buscar mídia na Vercel", async () => {
     mocks.getChannelSources.mockResolvedValue([{ quality: "AUTO", primaryUrl: "https://origem.exemplo/canal.m3u8", primaryOrigin: null, primaryReferer: null, fallbackUrl: null }]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("#EXTM3U", { status: 200, headers: { "content-type": "application/vnd.apple.mpegurl" } }));
+    const fetchMock = vi.spyOn(globalThis, "fetch");
     const res = response();
     await playbackChannel({ query: { username: "1234567890", password: "987654321012" }, params: { channelId: "10.m3u8" } } as any, res);
-    expect(res.status).toHaveBeenCalledWith(200); expect(res.setHeader).toHaveBeenCalledWith("Content-Type", "application/vnd.apple.mpegurl"); expect(res.send).toHaveBeenCalled();
+    expect(res.redirect).toHaveBeenCalledWith(307, expect.stringContaining("https://media.test.videlis.local/media?ticket=")); expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("reproduz filme e episódio Xtream autorizados sem divulgar a origem", async () => {
     mocks.getVodItemById.mockResolvedValue({ id: 41, sourceUrl: "https://origem.exemplo/filme.mkv" });
     mocks.getVodEpisodeById.mockResolvedValue({ id: 92, sourceUrl: "https://origem.exemplo/episodio.m3u8" });
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("filme", { status: 200, headers: { "content-type": "video/mp4" } })).mockResolvedValueOnce(new Response("episódio", { status: 200, headers: { "content-type": "application/vnd.apple.mpegurl" } }));
+    const fetchMock = vi.spyOn(globalThis, "fetch");
     const movieRes = response(); const seriesRes = response();
     await playbackVod({ query: { username: "1234567890", password: "987654321012" }, params: { itemId: "41.mkv", kind: "movie" } } as any, movieRes);
     await playbackVod({ query: { username: "1234567890", password: "987654321012" }, params: { itemId: "92.m3u8", kind: "series" } } as any, seriesRes);
     expect(mocks.getVodItemById).toHaveBeenCalledWith(41); expect(mocks.getVodEpisodeById).toHaveBeenCalledWith(92);
-    expect(movieRes.send).toHaveBeenCalled(); expect(seriesRes.send).toHaveBeenCalled();
+    expect(movieRes.redirect).toHaveBeenCalledWith(307, expect.stringContaining("https://media.test.videlis.local/media?ticket=")); expect(seriesRes.redirect).toHaveBeenCalledWith(307, expect.stringContaining("https://media.test.videlis.local/media?ticket=")); expect(fetchMock).not.toHaveBeenCalled();
   });
 });

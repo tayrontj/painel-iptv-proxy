@@ -73,11 +73,12 @@ describe("API oficial autenticada por Xtream", () => {
   it("entrega catálogo e EPG com sinalização 18+ sem URL de origem ou PIN", async () => {
     mocks.getCustomerByXtreamCredentials.mockResolvedValue(customer);
     mocks.listChannels.mockResolvedValue([{ id: 9, isActive: true, name: "Canal adulto", groupTitle: "Filmes", channelNumber: 9, logoUrl: null, epgId: "adulto.9", qualities: ["FHD"], ageRating: 18, primaryUrl: "https://origem.exemplo/live.m3u8" }]);
-    mocks.listVodItems.mockResolvedValue([{ id: 21, kind: "serie", title: "Série adulta", tmdbId: 500, synopsis: "", posterUrl: null, releaseYear: 2026, ageRating: 18, sourceUrl: "https://origem.exemplo/serie" }]);
+    mocks.listVodItems.mockResolvedValue([{ id: 21, kind: "serie", status: "ready", title: "Série adulta", tmdbId: 500, synopsis: "", posterUrl: null, releaseYear: 2026, ageRating: 18, sourceUrl: "https://origem.exemplo/serie" }, { id: 22, kind: "filme", status: "draft", title: "Rascunho", tmdbId: null, synopsis: null, posterUrl: null, releaseYear: null, ageRating: 0, sourceUrl: null }]);
     mocks.listVodEpisodes.mockResolvedValue([{ id: 31, seasonId: null, episodeNumber: 1, title: "Episódio 1", publishedAt: new Date("2026-08-27T00:00:00Z"), sourceUrl: "https://origem.exemplo/episodio.m3u8" }]);
     mocks.listEpgProgrammes.mockResolvedValue([{ id: 41, channelEpgId: "adulto.9", title: "Programa adulto", synopsis: null, startsAt: new Date(), endsAt: new Date(), ageRating: 18 }]);
     const result = await appRouter.createCaller(ctx).app.catalog({ username: "1234567890", password: "987654321012" });
     expect(result.playback).toMatchObject({ credentialTransport: "headers", usernameHeader: "x-videlis-username" }); expect(result.channels[0]).toMatchObject({ id: 9, playbackPath: "/api/app/playback/live/9", requiresAdultPin: true, ageRating: 18 }); expect(result.vod[0]).toMatchObject({ tmdbId: 500, playbackPath: null, requiresAdultPin: true }); expect(result.episodes[0]).toMatchObject({ id: 31, playbackPath: "/api/app/playback/episode/31", requiresAdultPin: true }); expect(result.epg[0]).toMatchObject({ id: 41, channelId: 9, requiresAdultPin: true });
+    expect(result.vod).toHaveLength(1); expect(JSON.stringify(result)).not.toContain("Rascunho");
     expect(JSON.stringify(result)).not.toContain("origem.exemplo"); expect(JSON.stringify(result)).not.toContain("987654321012");
   });
 });
