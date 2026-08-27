@@ -54,3 +54,6 @@
 - [ ] Testar cada link M3U8 individualmente, selecionar fallback saudável e excluir canais sem rota disponível da M3U e da API JSON.
 - [ ] Agendar a verificação de canais a cada cinco minutos com bloqueio de concorrência para não sobrepor rodadas ainda em execução.
 - [ ] Aplicar limite de dez segundos por link no monitor antes de acionar o fallback correspondente.
+- [ ] Ativar automaticamente o monitor de canais de cinco minutos ao cadastrar o primeiro canal.
+- [ ] Sincronizar EPG incrementalmente em cadência adaptável à cobertura de 24 ou 48 horas, com última leitura e falhas visíveis no painel.
+- [ ] Acionar a sincronização do EPG somente quando a cobertura futura restante estiver abaixo do limiar configurado ou quando a última leitura falhar.
