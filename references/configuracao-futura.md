@@ -48,6 +48,8 @@ As respostas M3U, Xtream e da API do aplicativo devolvem um ticket assinado com 
 
 O gateway encaminha o hash ao endpoint interno Vercel autenticado por segredo. Antes de receber a origem, cada requisição renova a mesma sessão global em `playback_sessions`, por meio de `videlis_acquire_playback_session`. Ao atingir `screen_limit`, um novo consumidor recebe HTTP `429`; outra reprodução do mesmo consumidor renova sua locação sem ocupar vaga adicional. Manifestos HLS reescritos conservam ticket e SID em chaves e segmentos, permitindo a renovação contínua. Após 120 segundos sem requisições, a sessão expira e a vaga é liberada.
 
+Quando o limite for atingido, o gateway devolve JSON com `error.code = "GLOBAL_SCREEN_LIMIT_REACHED"`, a quantidade de telas ativas, o limite vigente e `upgrade`. O aplicativo deve mostrar um alerta próprio — nunca um diálogo nativo do navegador — informando que as reproduções já iniciadas permanecem prioritárias. A chamada para ação usa `upgrade.action = "open_plan_options"` e indica o procedimento autenticado `app.planOptions`; depois da escolha, o aplicativo usa `app.changePlan` para gerar o PIX. Nenhuma sessão ativa é encerrada automaticamente para acomodar uma nova tentativa.
+
 O gateway aplica `Origin` e `Referer` quando cadastrados e transmite a resposta ao player. Assim, a função Vercel não baixa o arquivo inteiro na memória nem mantém uma conexão de mídia aberta.
 
 ## Referências

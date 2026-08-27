@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION videlis_acquire_playback_session(
   p_consumer_key_hash varchar(64),
   p_lease_seconds integer
 )
-RETURNS TABLE(allowed boolean, active_sessions integer, expires_at timestamptz)
+RETURNS TABLE(allowed boolean, active_sessions integer, screen_limit integer, expires_at timestamptz)
 LANGUAGE plpgsql
 SECURITY INVOKER
 AS $$
@@ -32,7 +32,7 @@ BEGIN
    FOR UPDATE;
 
   IF v_screen_limit IS NULL THEN
-    RETURN QUERY SELECT false, 0, NULL::timestamptz;
+    RETURN QUERY SELECT false, 0, 0, NULL::timestamptz;
     RETURN;
   END IF;
 
@@ -42,6 +42,8 @@ BEGIN
 
   v_expires_at := NOW() + (v_lease_seconds * INTERVAL '1 second');
 
+  -- Renova o consumidor existente antes de conferir capacidade. Uma sessão já
+  -- ativa não é removida nem recusada por novas tentativas na mesma conta.
   UPDATE playback_sessions
      SET last_seen_at = NOW(), expires_at = v_expires_at
    WHERE customer_id = p_customer_id
@@ -55,7 +57,7 @@ BEGIN
        AND expires_at > NOW();
 
     IF v_active_sessions >= v_screen_limit THEN
-      RETURN QUERY SELECT false, v_active_sessions, NULL::timestamptz;
+      RETURN QUERY SELECT false, v_active_sessions, v_screen_limit, NULL::timestamptz;
       RETURN;
     END IF;
 
@@ -69,6 +71,6 @@ BEGIN
    WHERE customer_id = p_customer_id
      AND expires_at > NOW();
 
-  RETURN QUERY SELECT true, v_active_sessions, v_expires_at;
+  RETURN QUERY SELECT true, v_active_sessions, v_screen_limit, v_expires_at;
 END;
 $$;
