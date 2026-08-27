@@ -107,3 +107,4 @@
 - [x] Preparar função PostgreSQL Neon para reservar e renovar sessão global de reprodução de forma atômica quando o banco for conectado.
 - [x] Preservar sessões de reprodução já ativas no limite global e impedir que novas telas desalojem consumidores existentes.
 - [x] Devolver bloqueio estruturado de limite com dados seguros para o aplicativo exibir alerta e chamada de upgrade de plano.
+- [x] Auditar as variáveis de ambiente necessárias para ativar a produção Vercel com Neon conectado, sem expor valores sensíveis.

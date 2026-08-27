@@ -6,7 +6,7 @@ Nenhum valor sensível deve ser incluído no React, no repositório ou nos arqui
 
 | Ambiente | Variável | Obrigatoriedade | Finalidade |
 | --- | --- | --- | --- |
-| Vercel | `NEON_DATABASE_URL` **ou** `POSTGRES_URL` | Obrigatória | Conexão PostgreSQL Neon. Use somente uma URL PostgreSQL válida. |
+| Vercel | `NEON_DATABASE_URL`, `POSTGRES_URL` **ou** `DATABASE_URL` | Obrigatória | Conexão PostgreSQL Neon. A integração mostrada na Vercel já cria `DATABASE_URL`, que o Videlis reconhece; não é necessário duplicar a mesma URL em outro nome. |
 | Vercel | `NEXUS_ADMIN_USERNAME` | Obrigatória no primeiro seed | Nome do administrador local inicial. |
 | Vercel | `NEXUS_ADMIN_PASSWORD` | Obrigatória no primeiro seed | Senha do administrador local; mínimo de 12 caracteres. |
 | Vercel | `JWT_SECRET` | Obrigatória | Assinatura da sessão administrativa local. |
