@@ -3,6 +3,7 @@
   "buildCommand": "pnpm build",
   "outputDirectory": "dist/public",
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/api/:videlisApiPath*", "destination": "/api?__videlis_api_path=:videlisApiPath*" },
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }

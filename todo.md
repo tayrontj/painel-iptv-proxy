@@ -108,3 +108,6 @@
 - [x] Preservar sessões de reprodução já ativas no limite global e impedir que novas telas desalojem consumidores existentes.
 - [x] Devolver bloqueio estruturado de limite com dados seguros para o aplicativo exibir alerta e chamada de upgrade de plano.
 - [x] Auditar as variáveis de ambiente necessárias para ativar a produção Vercel com Neon conectado, sem expor valores sensíveis.
+- [ ] Diagnosticar e corrigir a autenticação administrativa após a conexão Neon e o redeploy na Vercel.
+- [ ] Corrigir a implantação Vercel que responde 404 para `/api/trpc` e impede o login administrativo.
+- [x] Configurar na Vercel os segredos restantes de reprodução autorizados, sem alterar Mercado Pago ou atualização Android.
