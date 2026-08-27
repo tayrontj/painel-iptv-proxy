@@ -101,3 +101,4 @@
 - [x] Cobrir o resolvedor interno de reprodução com autorização do gateway, tickets inválidos e resolução segura de canal, filme e episódio.
 - [x] Cobrir o Worker Cloudflare de mídia para manifesto HLS, transmissão binária e propagação de erros sem expor a origem.
 - [x] Preparar e sincronizar a versão validada do projeto Videlis com o repositório GitHub informado pelo usuário, após confirmação explícita do envio.
+- [x] Avaliar funções PostgreSQL no Neon para invariantes transacionais do Videlis e documentar a divisão recomendada entre banco, API e Workers.
