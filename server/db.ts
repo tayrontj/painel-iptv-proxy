@@ -58,7 +58,7 @@ export async function listCustomers() {
   const rows = await db.select().from(customers).orderBy(desc(customers.updatedAt));
   const sessions = await db.select({ customerId: playbackSessions.customerId, count: sql<number>`count(*)::int` }).from(playbackSessions).where(sql`${playbackSessions.expiresAt} > NOW()`).groupBy(playbackSessions.customerId);
   const sessionMap = new Map(sessions.map(s => [s.customerId, Number(s.count)]));
-  return rows.map(customer => ({ ...customer, usedScreens: Number(customer.usedScreens) + (sessionMap.get(customer.id) || 0) }));
+  return rows.map(customer => ({ ...customer, usedScreens: sessionMap.get(customer.id) || 0 }));
 }
 export async function createCustomer(input: { label: string; email?: string | null; phone?: string | null; planId: number; planCycleId: number }) {
   const db = await getDb(); if (!db) throw new Error("Banco indisponível");
@@ -75,7 +75,7 @@ export async function getCustomerById(id: number) {
   const rows = await db.select().from(customers).where(eq(customers.id, id)).limit(1);
   if (!rows[0]) return undefined;
   const [sessions] = await db.select({ count: sql<number>`count(*)::int` }).from(playbackSessions).where(and(eq(playbackSessions.customerId, id), sql`${playbackSessions.expiresAt} > NOW()`));
-  return { ...rows[0], usedScreens: rows[0].usedScreens + (sessions?.count || 0) };
+  return { ...rows[0], usedScreens: Number(sessions?.count || 0) };
 }
 export async function getCustomerByAccessToken(accessToken: string) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(customers).where(eq(customers.accessTokenHash, hashAccessToken(accessToken))).limit(1); return rows[0]; }
 export async function getCustomerByXtreamCredentials(username: string, password: string) { const db = await getDb(); if (!db || !/^\d{6,16}$/.test(username) || !/^\d{6,32}$/.test(password)) return undefined; const rows = await db.select().from(customers).where(eq(customers.xtreamUsername, username)).limit(1); const customer = rows[0]; return customer?.xtreamPasswordHash === hashAccessToken(password) ? customer : undefined; }
