@@ -57,8 +57,8 @@ export async function listCustomers() {
   if (!db) return [];
   const rows = await db.select().from(customers).orderBy(desc(customers.updatedAt));
   const sessions = await db.select({ customerId: playbackSessions.customerId, count: sql<number>`count(*)::int` }).from(playbackSessions).where(sql`${playbackSessions.expiresAt} > NOW()`).groupBy(playbackSessions.customerId);
-  const sessionMap = new Map(sessions.map(s => [s.customerId, s.count]));
-  return rows.map(customer => ({ ...customer, usedScreens: customer.usedScreens + (sessionMap.get(customer.id) || 0) }));
+  const sessionMap = new Map(sessions.map(s => [s.customerId, Number(s.count)]));
+  return rows.map(customer => ({ ...customer, usedScreens: Number(customer.usedScreens) + (sessionMap.get(customer.id) || 0) }));
 }
 export async function createCustomer(input: { label: string; email?: string | null; phone?: string | null; planId: number; planCycleId: number }) {
   const db = await getDb(); if (!db) throw new Error("Banco indisponível");
