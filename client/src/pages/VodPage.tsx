@@ -22,6 +22,8 @@ import { getVodKindLabel, type VodKind } from "@/lib/panelModel";
 import { trpc } from "@/lib/trpc";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
+import { PanelConfirmDialog, PanelFormDialog } from "@/components/PanelActionDialog";
+import { PencilLine, Trash2 } from "lucide-react";
 
 const kinds: { id: VodKind; description: string; icon: typeof Film }[] = [
   { id: "filme", description: "Um título, uma reprodução", icon: Film },
@@ -42,6 +44,8 @@ export default function VodPage() {
   const utils = trpc.useUtils();
   const { user } = useAuth();
   const catalogQuery = trpc.vod.list.useQuery();
+  const [editingItem, setEditingItem] = useState<NonNullable<typeof catalogQuery.data>[number] | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null);
   const createVod = trpc.vod.create.useMutation({
     onSuccess: async () => {
       await utils.vod.list.invalidate();
@@ -51,6 +55,8 @@ export default function VodPage() {
     onError: error => toast.error(error.message),
   });
   const catalog = catalogQuery.data ?? [];
+  const updateVod = trpc.vod.update.useMutation({ onSuccess: async () => { setEditingItem(null); await utils.vod.list.invalidate(); toast.success("Conteúdo atualizado."); }, onError: error => toast.error(error.message) });
+  const removeVod = trpc.vod.remove.useMutation({ onSuccess: async () => { setDeleteTarget(null); await utils.vod.list.invalidate(); toast.success("Conteúdo excluído."); }, onError: error => toast.error(error.message) });
 
   const metadataSearch = trpc.vod.searchMetadata.useMutation({
     onSuccess: results => {
@@ -237,11 +243,13 @@ export default function VodPage() {
         ) : (
           <div className="divide-y divide-white/[0.06]">
             {catalog.map(item => (
-              <div key={item.id} className="flex flex-wrap items-center gap-4 px-5 py-4 sm:px-6"><div className="grid h-9 w-9 place-items-center rounded-lg border border-white/[0.08] bg-white/[0.04]"><Sparkles className="h-3.5 w-3.5 text-[#43E6C2]" /></div><div className="min-w-[180px] flex-1"><p className="text-sm font-bold text-slate-100">{item.title}</p><p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-500">{getVodKindLabel(item.kind)} · {item.releaseYear ?? "—"}</p></div>{item.kind !== "filme" ? <Link href={`/vod/${item.id}/episodios`} className="pressable rounded-xl border border-[#43E6C2]/20 bg-[#43E6C2]/[0.07] px-3 py-2 text-xs font-bold text-[#9df6df]">Gerenciar {item.kind === "serie" ? "episódios" : "capítulos"}</Link> : null}<span className="rounded-full border border-white/[0.1] bg-white/[0.03] px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-slate-400">{item.status === "ready" ? "Pronto para publicar" : "Rascunho"}</span></div>
+              <div key={item.id} className="flex flex-wrap items-center gap-4 px-5 py-4 sm:px-6"><div className="grid h-9 w-9 place-items-center rounded-lg border border-white/[0.08] bg-white/[0.04]"><Sparkles className="h-3.5 w-3.5 text-[#43E6C2]" /></div><div className="min-w-[180px] flex-1"><p className="text-sm font-bold text-slate-100">{item.title}</p><p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-500">{getVodKindLabel(item.kind)} · {item.releaseYear ?? "—"}</p></div>{item.kind !== "filme" ? <Link href={`/vod/${item.id}/episodios`} className="pressable rounded-xl border border-[#43E6C2]/20 bg-[#43E6C2]/[0.07] px-3 py-2 text-xs font-bold text-[#9df6df]">Gerenciar {item.kind === "serie" ? "episódios" : "capítulos"}</Link> : null}<span className="rounded-full border border-white/[0.1] bg-white/[0.03] px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-slate-400">{item.status === "ready" ? "Pronto para publicar" : "Rascunho"}</span><button type="button" onClick={() => setEditingItem(item)} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/[.06] hover:text-white" title="Editar conteúdo"><PencilLine className="h-4 w-4" /></button><button type="button" onClick={() => setDeleteTarget({ id: item.id, title: item.title })} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-rose-400/10 hover:text-[#ffaaa2]" title="Excluir conteúdo"><Trash2 className="h-4 w-4" /></button></div>
             ))}
           </div>
         )}
       </section>
+      <PanelFormDialog key={editingItem ? `edit-${editingItem.id}` : "closed"} open={Boolean(editingItem)} onOpenChange={open => { if (!open) setEditingItem(null); }} title={editingItem ? `Editar ${editingItem.title}` : "Editar conteúdo"} description="Atualize os metadados e a origem de reprodução do item." fields={editingItem ? [{ name: "title", label: "Título", defaultValue: editingItem.title, wide: true }, { name: "kind", label: "Tipo", defaultValue: editingItem.kind, options: [{ value: "filme", label: "Filme" }, { value: "serie", label: "Série" }, { value: "novela", label: "Novela" }] }, { name: "tmdbId", label: "ID TMDB", defaultValue: editingItem.tmdbId ? String(editingItem.tmdbId) : "", optional: true }, { name: "releaseYear", label: "Ano", type: "number", defaultValue: editingItem.releaseYear ? String(editingItem.releaseYear) : "", optional: true }, { name: "sourceUrl", label: "URL de reprodução", defaultValue: editingItem.sourceUrl ?? "", wide: true, optional: true }, { name: "posterUrl", label: "URL do poster", defaultValue: editingItem.posterUrl ?? "", wide: true, optional: true }, { name: "ageRating", label: "Classificação", defaultValue: String(editingItem.ageRating), options: [{ value: "0", label: "Livre" }, { value: "10", label: "10 anos" }, { value: "12", label: "12 anos" }, { value: "14", label: "14 anos" }, { value: "16", label: "16 anos" }, { value: "18", label: "18 anos" }] }, { name: "synopsis", label: "Sinopse", defaultValue: editingItem.synopsis ?? "", wide: true, optional: true }] : []} submitLabel="Salvar alterações" submitting={updateVod.isPending} onSubmit={values => editingItem && updateVod.mutate({ id: editingItem.id, title: values.title.trim(), kind: values.kind as VodKind, tmdbId: values.tmdbId.trim() ? Number(values.tmdbId) : null, releaseYear: values.releaseYear.trim() ? Number(values.releaseYear) : null, sourceUrl: values.sourceUrl.trim() || null, synopsis: values.synopsis.trim() || null, posterUrl: values.posterUrl.trim() || null, ageRating: Number(values.ageRating) })} />
+      <PanelConfirmDialog open={Boolean(deleteTarget)} onOpenChange={open => { if (!open) setDeleteTarget(null); }} title="Excluir conteúdo" description={deleteTarget ? `Excluir ${deleteTarget.title}? Temporadas e episódios vinculados também serão removidos.` : ""} confirmLabel="Excluir conteúdo" tone="danger" submitting={removeVod.isPending} onConfirm={() => deleteTarget && removeVod.mutate({ id: deleteTarget.id })} />
     </PanelLayout>
   );
 }

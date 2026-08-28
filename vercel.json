@@ -10,6 +10,8 @@
   },
   "rewrites": [
     { "source": "/api/:videlis_api_path*", "destination": "/api?__videlis_api_path=:videlis_api_path*" },
+    { "source": "/storage/:storage_path*", "destination": "/api/storage/:storage_path*" },
+    { "source": "/manus-storage/:storage_path*", "destination": "/api/manus-storage/:storage_path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

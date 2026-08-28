@@ -44,7 +44,7 @@ const navigation: { label: string; path?: string; icon: LucideIcon }[] = [
   { label: "Listas M3U", path: "/listas-m3u", icon: ListVideo },
   { label: "Catálogo VOD", path: "/vod", icon: Clapperboard },
   { label: "EPG", path: "/epg", icon: Activity },
-  { label: "Assinaturas PIX", path: "/assinaturas", icon: CircleDollarSign },
+  { label: "Assinaturas", path: "/assinaturas", icon: CircleDollarSign },
   { label: "Histórico PIX", path: "/historico-pix", icon: CircleDollarSign },
   { label: "Atualizações Android", path: "/atualizacoes-android", icon: Smartphone },
   { label: "Configurações", path: "/integracoes", icon: Settings2 },
