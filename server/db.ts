@@ -90,33 +90,31 @@ export async function acquirePlaybackSession(input: { customerId: number; consum
   const leaseSeconds = Math.max(30, Math.min(900, input.leaseSeconds ?? 120));
   const expiresAt = new Date(Date.now() + leaseSeconds * 1000);
 
-  return db.transaction(async (tx) => {
-    // Busca o limite de telas
-    const [customer] = await tx.select({ screenLimit: customers.screenLimit }).from(customers).where(eq(customers.id, input.customerId)).limit(1);
-    if (!customer) throw new Error("Cliente não encontrado.");
+  // Busca o limite de telas
+  const [customer] = await db.select({ screenLimit: customers.screenLimit }).from(customers).where(eq(customers.id, input.customerId)).limit(1);
+  if (!customer) throw new Error("Cliente não encontrado.");
 
-    // Remove as sessões expiradas
-    await tx.delete(playbackSessions).where(and(eq(playbackSessions.customerId, input.customerId), sql`${playbackSessions.expiresAt} <= NOW()`));
+  // Remove as sessões expiradas
+  await db.delete(playbackSessions).where(and(eq(playbackSessions.customerId, input.customerId), sql`${playbackSessions.expiresAt} <= NOW()`));
 
-    // Tenta renovar o consumidor caso ele já esteja ativo (renovação não consome nova tela)
-    const [updated] = await tx.update(playbackSessions).set({ lastSeenAt: new Date(), expiresAt }).where(and(eq(playbackSessions.customerId, input.customerId), eq(playbackSessions.consumerKeyHash, input.consumerKeyHash))).returning({ id: playbackSessions.id });
+  // Tenta renovar o consumidor caso ele já esteja ativo (renovação não consome nova tela)
+  const [updated] = await db.update(playbackSessions).set({ lastSeenAt: new Date(), expiresAt }).where(and(eq(playbackSessions.customerId, input.customerId), eq(playbackSessions.consumerKeyHash, input.consumerKeyHash))).returning({ id: playbackSessions.id });
 
-    if (!updated) {
-      // Se não havia sessão para esse dispositivo, verifica se há vagas
-      const [active] = await tx.select({ count: sql<number>`count(*)::int` }).from(playbackSessions).where(and(eq(playbackSessions.customerId, input.customerId), sql`${playbackSessions.expiresAt} > NOW()`));
-      
-      if (active.count >= customer.screenLimit) {
-        return { allowed: false, activeSessions: active.count, screenLimit: customer.screenLimit, expiresAt: null };
-      }
-      
-      // Cria a nova sessão
-      await tx.insert(playbackSessions).values({ customerId: input.customerId, consumerKeyHash: input.consumerKeyHash, lastSeenAt: new Date(), expiresAt }).onConflictDoNothing();
+  if (!updated) {
+    // Se não havia sessão para esse dispositivo, verifica se há vagas
+    const [active] = await db.select({ count: sql<number>`count(*)::int` }).from(playbackSessions).where(and(eq(playbackSessions.customerId, input.customerId), sql`${playbackSessions.expiresAt} > NOW()`));
+    
+    if (active.count >= customer.screenLimit) {
+      return { allowed: false, activeSessions: active.count, screenLimit: customer.screenLimit, expiresAt: null };
     }
+    
+    // Cria a nova sessão
+    await db.insert(playbackSessions).values({ customerId: input.customerId, consumerKeyHash: input.consumerKeyHash, lastSeenAt: new Date(), expiresAt }).onConflictDoNothing();
+  }
 
-    // Retorna a contagem atualizada
-    const [final] = await tx.select({ count: sql<number>`count(*)::int` }).from(playbackSessions).where(and(eq(playbackSessions.customerId, input.customerId), sql`${playbackSessions.expiresAt} > NOW()`));
-    return { allowed: true, activeSessions: final.count, screenLimit: customer.screenLimit, expiresAt };
-  });
+  // Retorna a contagem atualizada
+  const [final] = await db.select({ count: sql<number>`count(*)::int` }).from(playbackSessions).where(and(eq(playbackSessions.customerId, input.customerId), sql`${playbackSessions.expiresAt} > NOW()`));
+  return { allowed: true, activeSessions: final.count, screenLimit: customer.screenLimit, expiresAt };
 }
 export async function listActivePlaybackSessions(customerId: number) { const db = await getDb(); if (!db) return []; return db.select({ id: playbackSessions.id, expiresAt: playbackSessions.expiresAt, lastSeenAt: playbackSessions.lastSeenAt }).from(playbackSessions).where(and(eq(playbackSessions.customerId, customerId), sql`${playbackSessions.expiresAt} > NOW()`)).orderBy(desc(playbackSessions.lastSeenAt)); }
 export async function terminatePlaybackSession(input: { customerId: number; sessionId: number }) { const db = await getDb(); if (!db) throw new Error("Banco indisponível"); const removed = await db.delete(playbackSessions).where(and(eq(playbackSessions.id, input.sessionId), eq(playbackSessions.customerId, input.customerId))).returning({ id: playbackSessions.id }); if (!removed[0]) throw new Error("Sessão de reprodução não encontrada"); }
