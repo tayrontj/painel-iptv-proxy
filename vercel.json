@@ -20,6 +20,11 @@
     { "source": "/manus-storage/nexus-streamfield-wide_7bf781f7.jpg", "destination": "/assets/nexus-streamfield-wide_7bf781f7.jpg" },
     { "source": "/storage/:storage_path*", "destination": "/api/storage/:storage_path*" },
     { "source": "/manus-storage/:storage_path*", "destination": "/api/manus-storage/:storage_path*" },
+    { "source": "/get.php", "destination": "/api?__videlis_api_path=xtream/get.php" },
+    { "source": "/player_api.php", "destination": "/api?__videlis_api_path=xtream/player_api.php" },
+    { "source": "/live/:path*", "destination": "/api?__videlis_api_path=xtream/live/:path*" },
+    { "source": "/movie/:path*", "destination": "/api?__videlis_api_path=xtream/movie/:path*" },
+    { "source": "/series/:path*", "destination": "/api?__videlis_api_path=xtream/series/:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
