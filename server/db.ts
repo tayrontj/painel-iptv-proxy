@@ -89,7 +89,7 @@ export type PlaybackSessionReservation = { allowed: boolean; activeSessions: num
 export async function acquirePlaybackSession(input: { customerId: number; consumerKeyHash: string; leaseSeconds?: number }): Promise<PlaybackSessionReservation> {
   const db = await getDb(); if (!db) throw new Error("Banco indisponível");
   const leaseSeconds = Math.max(30, Math.min(900, input.leaseSeconds ?? 120));
-  const result = await db.execute(sql`SELECT allowed, active_sessions, screen_limit, expires_at FROM videlis_acquire_playback_session(${input.customerId}, ${input.consumerKeyHash}, ${leaseSeconds})`);
+  const result = await db.execute(sql`SELECT allowed, active_sessions, screen_limit, expires_at FROM videlis_acquire_playback_session(${input.customerId}::integer, ${input.consumerKeyHash}::varchar(64), ${leaseSeconds}::integer)`);
   const rows = (result as unknown as { rows?: Array<{ allowed: boolean; active_sessions: number; screen_limit: number; expires_at: Date | string | null }> }).rows || [];
   const row = rows[0];
   if (!row) throw new Error("Não foi possível reservar a sessão de reprodução.");
