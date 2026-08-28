@@ -120,7 +120,7 @@ export default function VodPage() {
   return (
     <PanelLayout>
       <section className="relative overflow-hidden rounded-[26px] border border-white/[0.08] bg-[#10191f] p-6 sm:p-8">
-        <img src="/storage/nexus-epg-archive_68394a10.jpg" alt="" className="pointer-events-none absolute right-0 top-0 h-full w-1/2 object-cover opacity-[0.16] mix-blend-screen" />
+        <img src="/assets/nexus-epg-archive_68394a10.jpg" alt="" className="pointer-events-none absolute right-0 top-0 h-full w-1/2 object-cover opacity-[0.16] mix-blend-screen" />
         <div className="relative max-w-2xl">
           <div className="flex items-center gap-2"><span className="signal-dot" /><span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#9df6df]">Conteúdo sob demanda</span></div>
           <h1 className="mt-4 text-3xl font-extrabold tracking-[-0.06em] text-white sm:text-4xl">Adicionar conteúdo ao catálogo VOD.</h1>
@@ -206,7 +206,7 @@ export default function VodPage() {
         <div className="space-y-6">
           <article className="surface-card overflow-hidden">
             <div className="relative min-h-[170px] overflow-hidden border-b border-white/[0.07] bg-[#0b1519] p-5">
-              <img src="/storage/nexus-streamfield-wide_7bf781f7.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.18]" />
+              <img src="/assets/nexus-streamfield-wide_7bf781f7.jpg" alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.18]" />
               <div className="relative flex h-full flex-col justify-between">
                 <div className="grid h-10 w-10 place-items-center rounded-xl border border-[#43E6C2]/20 bg-[#43E6C2]/[0.08]"><ImagePlus className="h-4.5 w-4.5 text-[#43E6C2]" /></div>
                 <div><p className="font-mono text-[10px] uppercase tracking-[0.16em] text-slate-500">Imagem de capa</p><p className="mt-1 text-sm font-bold text-white">{posterUrl ? "Capa selecionada" : "Aguardando fonte configurada"}</p></div>

@@ -63,14 +63,14 @@ export default function PanelLayout({ children }: PanelLayoutProps) {
     <div className="panel-shell flex min-h-screen bg-[#091013] text-slate-100">
       <aside className="side-rail relative hidden min-h-screen w-[262px] shrink-0 overflow-hidden border-r border-white/[0.07] bg-[#0b1418] px-4 py-5 lg:flex lg:flex-col">
         <img
-          src="/storage/nexus-routes-portrait_4f436c3b.jpg"
+          src="/assets/nexus-routes-portrait_4f436c3b.jpg"
           alt=""
           className="pointer-events-none absolute inset-x-0 bottom-0 h-[330px] w-full object-cover opacity-[0.14] mix-blend-screen"
         />
         <div className="relative flex items-center gap-3 px-2">
           <div className="grid h-10 w-10 place-items-center rounded-xl border border-[#43E6C2]/25 bg-[#43E6C2]/10 shadow-[0_0_22px_rgba(67,230,194,0.08)]">
             <img
-              src="/storage/nexus-frequency-mark_5dbca578.png"
+              src="/assets/nexus-frequency-mark_5dbca578.png"
               alt="Videlis"
               className="h-7 w-7 object-contain"
             />
@@ -138,7 +138,7 @@ export default function PanelLayout({ children }: PanelLayoutProps) {
         <div className="flex min-h-[66px] items-center justify-between border-b border-white/[0.07] bg-[#091013]/90 px-5 backdrop-blur-xl sm:px-8 lg:px-10">
           <div className="flex items-center gap-3 lg:hidden">
             <div className="grid h-8 w-8 place-items-center rounded-lg border border-[#43E6C2]/20 bg-[#43E6C2]/10">
-              <img src="/storage/nexus-frequency-mark_5dbca578.png" alt="Videlis" className="h-5 w-5" />
+              <img src="/assets/nexus-frequency-mark_5dbca578.png" alt="Videlis" className="h-5 w-5" />
             </div>
             <span className="text-sm font-semibold">Videlis</span>
           </div>

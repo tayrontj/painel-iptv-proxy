@@ -10,6 +10,14 @@
   },
   "rewrites": [
     { "source": "/api/:videlis_api_path*", "destination": "/api?__videlis_api_path=:videlis_api_path*" },
+    { "source": "/storage/nexus-frequency-mark_5dbca578.png", "destination": "/assets/nexus-frequency-mark_5dbca578.png" },
+    { "source": "/manus-storage/nexus-frequency-mark_5dbca578.png", "destination": "/assets/nexus-frequency-mark_5dbca578.png" },
+    { "source": "/storage/nexus-routes-portrait_4f436c3b.jpg", "destination": "/assets/nexus-routes-portrait_4f436c3b.jpg" },
+    { "source": "/manus-storage/nexus-routes-portrait_4f436c3b.jpg", "destination": "/assets/nexus-routes-portrait_4f436c3b.jpg" },
+    { "source": "/storage/nexus-epg-archive_68394a10.jpg", "destination": "/assets/nexus-epg-archive_68394a10.jpg" },
+    { "source": "/manus-storage/nexus-epg-archive_68394a10.jpg", "destination": "/assets/nexus-epg-archive_68394a10.jpg" },
+    { "source": "/storage/nexus-streamfield-wide_7bf781f7.jpg", "destination": "/assets/nexus-streamfield-wide_7bf781f7.jpg" },
+    { "source": "/manus-storage/nexus-streamfield-wide_7bf781f7.jpg", "destination": "/assets/nexus-streamfield-wide_7bf781f7.jpg" },
     { "source": "/storage/:storage_path*", "destination": "/api/storage/:storage_path*" },
     { "source": "/manus-storage/:storage_path*", "destination": "/api/manus-storage/:storage_path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
