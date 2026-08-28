@@ -42,6 +42,7 @@ export async function playbackVod(req: Request, res: Response) {
   const session = await acquirePlaybackSession({ customerId: access.customer.id, consumerKeyHash: consumerKeyHash(consumerKey(req)) }); if (!session.allowed) return void res.status(429).send("Limite de telas atingido");
   const item = req.params.kind === "series" ? await getVodEpisodeById(itemId) : await getVodItemById(itemId); if (!item?.sourceUrl) return void res.sendStatus(404);
   return void res.redirect(302, item.sourceUrl);
+}
 
 /** Resposta compatível com ações Xtream V2; usa as rotas internas da Vercel. */
 export async function xtreamPlayerApi(req: Request, res: Response) {
